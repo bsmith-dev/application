@@ -1,0 +1,16 @@
+set shell := ["bash", "-cu"]
+
+# Build the API module and its database dependency.
+build:
+    mvn -f ../pom.xml -pl api -am clean verify
+
+# Test the API module and its database dependency.
+test:
+    mvn -f ../pom.xml -pl api -am test
+
+# Remove API module build output.
+clean:
+    mvn -f ../pom.xml -pl api clean
+
+default:
+    @just --list

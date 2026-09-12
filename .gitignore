@@ -1,0 +1,15 @@
+/ui/target/classes/com/example/ui/UiApplication.class
+/ui/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+/ui/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+/api/target/classes/com/example/api/ApiApplication.class
+/api/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+/api/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+/database/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+/ui/target/maven-archiver/pom.properties
+/ui/target/ui-1.0.0-SNAPSHOT.jar
+/api/target/maven-archiver/pom.properties
+/api/target/api-1.0.0-SNAPSHOT.jar
+/database/target/classes/com/example/database/DatabaseModule.class
+/database/target/maven-archiver/pom.properties
+/database/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+/database/target/database-1.0.0-SNAPSHOT.jar

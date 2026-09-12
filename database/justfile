@@ -1,0 +1,16 @@
+set shell := ["bash", "-cu"]
+
+# Build the database module through the root Maven reactor.
+build:
+    mvn -f ../pom.xml -pl database -am clean verify
+
+# Test the database module through the root Maven reactor.
+test:
+    mvn -f ../pom.xml -pl database -am test
+
+# Remove database module build output.
+clean:
+    mvn -f ../pom.xml -pl database clean
+
+default:
+    @just --list
