@@ -13,3 +13,6 @@
 /database/target/maven-archiver/pom.properties
 /database/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
 /database/target/database-1.0.0-SNAPSHOT.jar
+/database/target/classes/db/migration/V1__initial_schema.sql
+/database/target/classes/application.yml
+/database/.env
