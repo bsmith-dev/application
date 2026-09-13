@@ -18,58 +18,6 @@ clean:
 default:
     @just --list
 
-# Requires: database container is up and migrations have run.
-backup:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    BACKUP_DIR="src/main/resources/db/backup"
-    DUMP="docker compose exec -T database mariadump -u root -p${DB_PASSWORD} --no-create-info --skip-triggers --complete-insert --single-transaction sandboxdb"
-
-    echo "Exporting data to ${BACKUP_DIR}/ ..."
-    ${DUMP} organizations      > "${BACKUP_DIR}/01-organizations.sql"
-    ${DUMP} members            > "${BACKUP_DIR}/02-members.sql"
-    ${DUMP} groups             > "${BACKUP_DIR}/03-groups.sql"
-    ${DUMP} group_memberships  > "${BACKUP_DIR}/04-group-memberships.sql"
-    ${DUMP} prompts            > "${BACKUP_DIR}/05-prompts.sql"
-
-    echo "Backup complete. Files written to ${BACKUP_DIR}/:"
-    ls -1 "${BACKUP_DIR}"
-
-# Restore data from src/main/resources/db/backup/ in FK-safe sequential order.
-
-# Requires: database container is up and schema migrations have already run.
-backup-restore:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    BACKUP_DIR="src/main/resources/db/backup"
-    FILES=(
-        "01-organizations.sql"
-        "02-members.sql"
-        "03-groups.sql"
-        "04-group-memberships.sql"
-        "05-prompts.sql"
-    )
-
-    for file in "${FILES[@]}"; do
-        if [ ! -f "${BACKUP_DIR}/${file}" ]; then
-            echo "Missing backup file: ${BACKUP_DIR}/${file}" >&2
-            exit 1
-        fi
-    done
-
-    echo "Restoring backup files from ${BACKUP_DIR}/ ..."
-    {
-        echo "START TRANSACTION;"
-        for file in "${FILES[@]}"; do
-            cat "${BACKUP_DIR}/${file}"
-        done
-        echo "COMMIT;"
-    } | docker compose exec -T database mariadb -u root -p"${DB_PASSWORD}" sandboxdb
-
-    echo "Backup restore complete."
-
 # Stop the container and delete the data volume (full reset)
 destroy:
     docker compose down -v

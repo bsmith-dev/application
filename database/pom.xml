@@ -10,12 +10,16 @@
   </parent>
   <artifactId>database</artifactId>
   <packaging>jar</packaging>
+  <properties>
+    <flyway.version>11.9.1</flyway.version>
+    <mariadb.client.version>3.5.3</mariadb.client.version>
+  </properties>
   <build>
     <plugins>
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>
-        <version>11.9.1</version>
+        <version>${flyway.version}</version>
         <configuration>
           <url>${env.DB_URL}</url>
           <user>${env.DB_USERNAME}</user>
@@ -28,12 +32,12 @@
           <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
-            <version>11.9.1</version>
+            <version>${flyway.version}</version>
           </dependency>
           <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
-            <version>3.5.3</version>
+            <version>${mariadb.client.version}</version>
           </dependency>
         </dependencies>
       </plugin>
