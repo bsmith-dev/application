@@ -1,4 +1,4 @@
-package org.sandbox;
+package app.prompts;
 
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -7,7 +7,7 @@ import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
-@AnalyzeClasses(packages = "org.sandbox", importOptions = ImportOption.DoNotIncludeTests.class)
+@AnalyzeClasses(packages = "app.prompts", importOptions = ImportOption.DoNotIncludeTests.class)
 public class ArchitectureComplianceTest {
 
     @ArchTest

@@ -1,7 +1,7 @@
 services:
   database:
     image: mariadb:11.4.5
-    container_name: database-container
+    container_name: promptdb-container
     ports:
       - "3306:3306"
     environment:

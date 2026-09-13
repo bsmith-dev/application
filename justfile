@@ -26,3 +26,23 @@ clean:
 
 default:
     @just --list
+
+# Full lifecycle: stop app, reset DB, seed DB, app-verify, deploy, and validate
+test-lifecycle:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    cleanup() {
+        just --justfile api/justfile app-stop
+    }
+    trap cleanup EXIT
+
+    just --justfile api/justfile app-stop
+    just --justfile database/justfile rebuild
+    just --justfile api/justfile app-verify
+    just --justfile api/justfile app-up
+    just --justfile api/justfile app-wait
+    just --justfile api/justfile test-http
+
+    echo ""
+    echo "✓ CI lifecycle complete."
