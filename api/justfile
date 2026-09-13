@@ -1,4 +1,5 @@
 set shell := ["bash", "-cu"]
+set dotenv-load := true
 
 # Build the API module and its database dependency.
 build:
@@ -14,3 +15,105 @@ clean:
 
 default:
     @just --list
+
+
+
+
+
+# Start the application (env vars loaded from .env; database must already be up)
+app-run:
+    ./mvnw spring-boot:run -f pom.xml
+
+# Kill the application if it is running on :8080 (no-op otherwise)
+app-stop:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    PIDS=$(lsof -ti tcp:8080 2>/dev/null || true)
+    if [ -n "${PIDS}" ]; then
+        kill ${PIDS}
+        echo "Stopped app on :8080."
+    else
+        echo "No app running on :8080."
+    fi
+    rm -f target/app.pid
+
+# Start the packaged application in the background
+app-up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    java -jar target/sandbox-0.0.1-SNAPSHOT.jar > target/app.log 2>&1 &
+    echo "$!" > target/app.pid
+    echo "Started app (pid $(cat target/app.pid)). Logs: target/app.log"
+
+# Run all tests and enforce the 80% line/branch JaCoCo coverage gate
+app-verify:
+    ./mvnw clean verify
+
+# Wait until the application is accepting HTTP connections on :8080 (polls up to 60 s)
+app-wait:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "Waiting for app on :8080..."
+    for i in $(seq 1 60); do
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST http://localhost:8080/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"username":"x","password":"x"}' 2>/dev/null || true)
+        if [ -n "${CODE}" ] && [ "${CODE}" != "000" ]; then
+            echo "App ready (HTTP ${CODE})."
+            exit 0
+        fi
+        sleep 1
+    done
+    echo "App did not become ready in 60 s." >&2
+    exit 1
+
+# Full lifecycle alias for the CI gate described in the project docs.
+ci: test-lifecycle
+
+# Open the HTML coverage report in the default browser (macOS)
+coverage:
+    open target/site/jacoco/index.html
+
+# Build the executable fat JAR, skipping tests
+package:
+    ./mvnw package -DskipTests -q
+
+# Run a single test class by simple name, e.g. just test-class MemberServiceTest
+test-class class:
+    ./mvnw test -Dtest={{ class }}
+
+# Run all HTTP request tests in src/test/resources/http using the dev env file
+test-http:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    npx --yes httpyac send "src/test/resources/http/*.http" --env dev --all
+
+# Full lifecycle: stop app, reset DB, seed DB, app-verify, deploy, and validate
+test-lifecycle:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    cleanup() {
+        just app-stop
+    }
+    trap cleanup EXIT
+
+    just app-stop
+    just db-rebuild
+    just app-verify
+    just app-up
+    just app-wait
+    just test-http
+    just smoke
+
+    echo ""
+    echo "✓ CI lifecycle complete."
+
+# Run the full test suite and generate the JaCoCo coverage report
+test-unit:
+    ./mvnw test
