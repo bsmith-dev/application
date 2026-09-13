@@ -2,15 +2,15 @@ set shell := ["bash", "-cu"]
 
 # Build the UI module and all required upstream modules.
 build:
-    mvn -f ../pom.xml -pl ui -am clean verify
+    ../mvnw -f ../pom.xml -pl ui -am clean verify
 
 # Test the UI module and all required upstream modules.
 test:
-    mvn -f ../pom.xml -pl ui -am test
+    ../mvnw -f ../pom.xml -pl ui -am test
 
-# Remove UI module build output.
+# Remove UI module ui-build output.
 clean:
-    mvn -f ../pom.xml -pl ui clean
+    ../mvnw -f ../pom.xml -pl ui clean
 
 default:
     @just --list

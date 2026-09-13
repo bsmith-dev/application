@@ -1,4 +1,4 @@
-package com.example.database;
+package app.database;
 
 public final class DatabaseModule {
     private DatabaseModule() {

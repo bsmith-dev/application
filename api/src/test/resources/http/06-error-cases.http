@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# 06-error-cases.http — Negative path / error response coverage
+# 06-error-cases.http — Negative path / error response api-coverage
 #
 # Run order: after 01-auth.http at minimum; some cases require groupId/promptId.
 #

@@ -1,4 +1,4 @@
-package com.example.ui;
+package app.ui;
 
 public final class UiApplication {
     private UiApplication() {

@@ -3,29 +3,25 @@ set dotenv-load := true
 
 # Build the API module and its database dependency.
 build:
-    mvn -f ../pom.xml -pl api -am clean verify
+    ../mvnw -f ../pom.xml -pl api -am clean verify
 
-# Test the API module and its database dependency.
+# Unit test the API module and its database dependency.
 test:
-    mvn -f ../pom.xml -pl api -am test
+    ../mvnw -f ../pom.xml -pl api -am test
 
 # Remove API module build output.
 clean:
-    mvn -f ../pom.xml -pl api clean
+    ../mvnw -f ../pom.xml -pl api clean
 
 default:
     @just --list
 
-
-
-
-
 # Start the application (env vars loaded from .env; database must already be up)
-app-run:
+run:
     ./mvnw spring-boot:run -f pom.xml
 
 # Kill the application if it is running on :8080 (no-op otherwise)
-app-stop:
+stop:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -39,22 +35,22 @@ app-stop:
     rm -f target/app.pid
 
 # Start the packaged application in the background
-app-up:
+up:
     #!/usr/bin/env bash
     set -euo pipefail
 
     JAVA_HOME=$(/usr/libexec/java_home -v 25)
     export PATH="$JAVA_HOME/bin:$PATH"
-    $JAVA_HOME/bin/java -jar target/api-1.0.0-SNAPSHOT.jar > target/app.log 2>&1 &
+    $JAVA_HOME/bin/java -jar target/1.0.0-SNAPSHOT.jar > target/app.log 2>&1 &
     echo "$!" > target/app.pid
     echo "Started app (pid $(cat target/app.pid)). Logs: target/app.log"
 
 # Run all tests and enforce the 50% line/branch JaCoCo coverage gate
-app-verify:
+verify:
     ./mvnw clean verify
 
 # Wait until the application is accepting HTTP connections on :8080 (polls up to 60 s)
-app-wait:
+wait:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -81,17 +77,9 @@ coverage:
 package:
     ./mvnw package -DskipTests -q
 
-# Run a single test class by simple name, e.g. just test-class MemberServiceTest
-test-class class:
-    ./mvnw test -Dtest={{ class }}
-
 # Run all HTTP request tests in src/test/resources/http using the dev env file
-test-http:
+integration-test:
     #!/usr/bin/env bash
     set -euo pipefail
 
     npx --yes httpyac send "src/test/resources/http/*.http" --env dev --all
-
-# Run the full test suite and generate the JaCoCo coverage report
-test-unit:
-    ./mvnw test

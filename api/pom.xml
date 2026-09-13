@@ -171,7 +171,7 @@
                                 <exclude>
                                     org/sandbox/prompts/domain/service/PromptAuthorizationPolicy.class
                                 </exclude>
-                                <!-- Persistence adapters require a live DB; excluded from unit coverage -->
+                                <!-- Persistence adapters require a live DB; excluded from unit api-coverage -->
                                 <exclude>
                                     org/sandbox/prompts/infrastructure/persistence/*PersistenceAdapter.class
                                 </exclude>

@@ -23,7 +23,7 @@ Each module includes a local `justfile`. The root `justfile` builds the full Mav
 ## Root commands
 
 ```bash
-just build      # Build database, api, and ui
+just db-api-ui-build      # Build database, api, and ui
 just database   # Build database only
 just api        # Build api and database
 just ui         # Build ui, api, and database

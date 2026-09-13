@@ -5,15 +5,15 @@ dotenv-path := ".env"
 
 # Build the database module through the root Maven reactor.
 build:
-    mvn -f ../pom.xml -pl database -am clean verify
+    ../mvnw -f ../pom.xml -pl database -am clean verify
 
 # Test the database module through the root Maven reactor.
 test:
-    mvn -f ../pom.xml -pl database -am test
+    ../mvnw -f ../pom.xml -pl database -am test
 
 # Remove database module build output.
 clean:
-    mvn -f ../pom.xml -pl database clean
+    ../mvnw -f ../pom.xml -pl database clean
 
 default:
     @just --list
@@ -32,15 +32,15 @@ logs:
 
 # Run Flyway migrations manually using .env database settings
 migrate:
-    mvn -f ../pom.xml -pl database flyway:migrate
+    ../mvnw -f ../pom.xml -pl database flyway:migrate
 
 # Recreate the local database from an empty volume and load sample data
-rebuild: destroy up wait migrate seed-sample
+rebuild: destroy up wait migrate seed
 
 # Load the manual sample dataset into the local database
 
 # Requires: database is up and Flyway migrations have already run
-seed-sample:
+seed:
     docker compose exec -T database mariadb -u root -p"${DB_PASSWORD}" sandboxdb < scripts/seed-sample-data.sql
 
 # Open an interactive MariaDB shell against sandboxdb
@@ -60,7 +60,7 @@ wait:
     set -euo pipefail
 
     echo "Waiting for database..."
-    until docker compose exec database mariadb-admin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
+    until docker compose exec database mariaadmin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
         if [ "${SECONDS}" -ge 30 ]; then
             echo "Database did not become ready in 30 s"
             exit 1
