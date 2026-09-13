@@ -10,4 +10,33 @@
   </parent>
   <artifactId>database</artifactId>
   <packaging>jar</packaging>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>11.9.1</version>
+        <configuration>
+          <url>${env.DB_URL}</url>
+          <user>${env.DB_USERNAME}</user>
+          <password>${env.DB_PASSWORD}</password>
+          <locations>
+            <location>filesystem:${project.basedir}/src/main/resources/db/migration</location>
+          </locations>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>11.9.1</version>
+          </dependency>
+          <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.5.3</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
 </project>

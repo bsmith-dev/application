@@ -1,5 +1,8 @@
 set shell := ["bash", "-cu"]
 
+set dotenv-load := true
+dotenv-path := ".env"
+
 # Build the database module through the root Maven reactor.
 build:
     mvn -f ../pom.xml -pl database -am clean verify
@@ -14,3 +17,106 @@ clean:
 
 default:
     @just --list
+
+# Requires: database container is up and migrations have run.
+backup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    BACKUP_DIR="src/main/resources/db/backup"
+    DUMP="docker compose exec -T database mariadump -u root -p${DB_PASSWORD} --no-create-info --skip-triggers --complete-insert --single-transaction sandboxdb"
+
+    echo "Exporting data to ${BACKUP_DIR}/ ..."
+    ${DUMP} organizations      > "${BACKUP_DIR}/01-organizations.sql"
+    ${DUMP} members            > "${BACKUP_DIR}/02-members.sql"
+    ${DUMP} groups             > "${BACKUP_DIR}/03-groups.sql"
+    ${DUMP} group_memberships  > "${BACKUP_DIR}/04-group-memberships.sql"
+    ${DUMP} prompts            > "${BACKUP_DIR}/05-prompts.sql"
+
+    echo "Backup complete. Files written to ${BACKUP_DIR}/:"
+    ls -1 "${BACKUP_DIR}"
+
+# Restore data from src/main/resources/db/backup/ in FK-safe sequential order.
+
+# Requires: database container is up and schema migrations have already run.
+backup-restore:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    BACKUP_DIR="src/main/resources/db/backup"
+    FILES=(
+        "01-organizations.sql"
+        "02-members.sql"
+        "03-groups.sql"
+        "04-group-memberships.sql"
+        "05-prompts.sql"
+    )
+
+    for file in "${FILES[@]}"; do
+        if [ ! -f "${BACKUP_DIR}/${file}" ]; then
+            echo "Missing backup file: ${BACKUP_DIR}/${file}" >&2
+            exit 1
+        fi
+    done
+
+    echo "Restoring backup files from ${BACKUP_DIR}/ ..."
+    {
+        echo "START TRANSACTION;"
+        for file in "${FILES[@]}"; do
+            cat "${BACKUP_DIR}/${file}"
+        done
+        echo "COMMIT;"
+    } | docker compose exec -T database mariadb -u root -p"${DB_PASSWORD}" sandboxdb
+
+    echo "Backup restore complete."
+
+# Stop the container and delete the data volume (full reset)
+destroy:
+    docker compose down -v
+
+# Stop the container (data volume is preserved)
+down:
+    docker compose down
+
+# Follow database container logs
+logs:
+    docker compose logs -f database
+
+# Run Flyway migrations manually using .env database settings
+migrate:
+    mvn -f ../pom.xml -pl database flyway:migrate
+
+# Recreate the local database from an empty volume and load sample data
+rebuild: destroy up wait migrate seed-sample
+
+# Load the manual sample dataset into the local database
+
+# Requires: database is up and Flyway migrations have already run
+seed-sample:
+    docker compose exec -T database mariadb -u root -p"${DB_PASSWORD}" sandboxdb < scripts/seed-sample-data.sql
+
+# Open an interactive MariaDB shell against sandboxdb
+shell:
+    docker compose exec database mariadb -u root -p"${DB_PASSWORD}" sandboxdb
+
+# Start the database container and wait until it is ready to accept connections
+start: up wait
+
+# Start the MariaDB container in the background
+up:
+    docker compose up -d database
+
+# Wait until the database is ready to accept connections (polls up to 30 s)
+wait:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "Waiting for database..."
+    until docker compose exec database mariadb-admin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
+        if [ "${SECONDS}" -ge 30 ]; then
+            echo "Database did not become ready in 30 s"
+            exit 1
+        fi
+        sleep 1
+    done
+    echo "Database ready."
