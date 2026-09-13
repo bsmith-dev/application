@@ -1,0 +1,87 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 03-groups.http — Group CRUD
+#
+# Run order: after 01-auth.http (authToken must be set in env)
+#
+# Covers:
+#   GET  /api/groups           — list groups for authenticated member
+#   POST /api/groups           — create a group
+#   GET  /api/groups/{groupId} — fetch a single group by ID
+#   PUT  /api/groups/{groupId} — rename a group
+#   DELETE /api/groups/{groupId} — delete a group [OPTIONAL — teardown only]
+#
+# After running [2/5]:
+#   Copy the returned groupId into http-client.env.json → "groupId"
+#   All subsequent files (04, 05) depend on this value.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/5] List groups (empty baseline)
+# Expected: 200 OK — empty array on a fresh database.
+
+GET {{baseUrl}}/api/groups
+Authorization: Bearer {{authToken}}
+
+###
+
+### [2/5] Create a group
+# Expected: 201 Created
+# Response: { groupId, organizationId, name }
+# → Copy groupId into http-client.env.json → "groupId"
+#
+# The creator is automatically added as an ADMIN member of the group.
+
+POST {{baseUrl}}/api/groups
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Group"
+}
+
+###
+
+### [3/5] List groups (should now contain the created group)
+# Expected: 200 OK — array with one entry whose name is "Smoke Test Group".
+
+GET {{baseUrl}}/api/groups
+Authorization: Bearer {{authToken}}
+
+###
+
+### [4/5] Get single group by ID
+# Expected: 200 OK
+# Response: { groupId, organizationId, name }
+# Requires: groupId set in env from step [2/5]
+
+GET {{baseUrl}}/api/groups/{{groupId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### [5/5] Rename group
+# Expected: 200 OK
+# Response: { groupId, organizationId, name } with updated name.
+# Requires: groupId set in env from step [2/5]
+
+PUT {{baseUrl}}/api/groups/{{groupId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Group (renamed)"
+}
+
+###
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OPTIONAL TEARDOWN — run only after all other smoke tests are complete.
+# Deleting the group will cascade and break 04-group-members and 05-prompts
+# if those have not already been run.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [TEARDOWN] Delete group
+# Expected: 204 No Content
+# Requires: groupId set in env from step [2/5]
+
+DELETE {{baseUrl}}/api/groups/{{groupId}}
+Authorization: Bearer {{authToken}}

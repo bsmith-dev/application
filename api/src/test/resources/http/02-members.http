@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 02-members.http — Member resource: profile and list
+#
+# Run order: after 01-auth.http (authToken must be set in env)
+#
+# Covers:
+#   GET /api/members/me   — returns the authenticated member's own profile
+#   GET /api/members      — returns all registered members (dev utility)
+#
+# All requests require a valid JWT.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/3] Get own profile (primary member)
+# Expected: 200 OK
+# Response: { memberId, organizationId, username, email, role }
+# Validates: JWT sub/memberId claim resolves to the correct member record.
+
+GET {{baseUrl}}/api/members/me
+Authorization: Bearer {{authToken}}
+
+###
+
+### [2/3] Get own profile (secondary member)
+# Expected: 200 OK
+# Response: { memberId, organizationId, username, email, role } for ben.
+# Validates: each token resolves to its own principal independently.
+
+GET {{baseUrl}}/api/members/me
+Authorization: Bearer {{secondAuthToken}}
+
+###
+
+### [3/3] List all members
+# Expected: 200 OK with an array containing at least brian and ben.
+# Useful for looking up UUIDs when adding members to groups.
+
+GET {{baseUrl}}/api/members
+Authorization: Bearer {{authToken}}

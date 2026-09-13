@@ -1,0 +1,101 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 05-prompts.http — Prompt CRUD
+#
+# Run order: after 03-groups.http (groupId must be set in env)
+#
+# Covers:
+#   POST   /api/groups/{groupId}/prompts                — create prompt
+#   GET    /api/groups/{groupId}/prompts                — list prompts
+#   GET    /api/groups/{groupId}/prompts/{promptId}     — get single prompt
+#   PUT    /api/groups/{groupId}/prompts/{promptId}     — update prompt
+#   DELETE /api/groups/{groupId}/prompts/{promptId}     — delete prompt
+#
+# After running [1/8]:
+#   Copy the returned id (promptId) into http-client.env.json → "promptId"
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/8] Create first prompt
+# Expected: 201 Created
+# Response: { id, groupId, createdBy, title, content, createdAt, updatedAt }
+# → Copy id into http-client.env.json → "promptId"
+
+POST {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Hello World Prompt",
+  "content": "Write a friendly greeting that introduces the concept of prompt engineering."
+}
+
+###
+
+### [2/8] List prompts (should contain the first prompt)
+# Expected: 200 OK — array with one entry.
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+
+###
+
+### [3/8] Get single prompt by ID
+# Expected: 200 OK
+# Response: full prompt object.
+# Requires: promptId set in env from step [1/8]
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### [4/8] Update prompt (title and content)
+# Expected: 200 OK
+# Response: prompt object with updated title/content and refreshed updatedAt.
+
+PUT {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Hello World Prompt (revised)",
+  "content": "Write a concise, friendly greeting that introduces prompt engineering to a beginner."
+}
+
+###
+
+### [5/8] Verify update — get the prompt again
+# Expected: 200 OK — title and content reflect the values from [4/8].
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### [6/8] Create second prompt (so list is non-trivial)
+# Expected: 201 Created
+
+POST {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Code Review Prompt",
+  "content": "Review the following code snippet for correctness, readability, and potential bugs. Provide actionable feedback."
+}
+
+###
+
+### [7/8] List prompts (should now contain both prompts)
+# Expected: 200 OK — array with two entries.
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+
+###
+
+### [8/8] Delete first prompt
+# Expected: 204 No Content
+# After this, a subsequent list should contain only the second prompt.
+
+DELETE {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
+Authorization: Bearer {{authToken}}

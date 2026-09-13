@@ -1,20 +1,188 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.example</groupId>
-    <artifactId>application</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-  </parent>
-  <artifactId>api</artifactId>
-  <packaging>jar</packaging>
-  <dependencies>
-    <dependency>
-      <groupId>com.example</groupId>
-      <artifactId>database</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-  </dependencies>
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>application</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>api</artifactId>
+    <packaging>jar</packaging>
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Persistence -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Validation -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Security + JWT -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.5.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.13</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <excludes>
+                                <!-- application entry point -->
+                                <exclude>org/sandbox/PromptDatabaseApplication.class</exclude>
+                                <!-- JPA entities (framework boilerplate) -->
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/persistence/Jpa*Entity.class
+                                </exclude>
+                                <!-- Spring Data repository interfaces -->
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/persistence/Jpa*Repository.class
+                                </exclude>
+                                <!-- Configuration-only classes -->
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/config/PromptsInfrastructureConfig.class
+                                </exclude>
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/config/SecurityConfig.class
+                                </exclude>
+                                <!-- Port interfaces and markers -->
+                                <exclude>org/sandbox/prompts/application/port/*.class</exclude>
+                                <!-- Exception value objects -->
+                                <exclude>
+                                    org/sandbox/prompts/application/service/*NotFoundException.class
+                                </exclude>
+                                <exclude>
+                                    org/sandbox/prompts/application/service/AccessDeniedException.class
+                                </exclude>
+                                <!-- DTOs -->
+                                <exclude>org/sandbox/prompts/application/dto/*.class</exclude>
+                                <!-- Mapper (package-private, excluded per agreement) -->
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/persistence/PromptsPersistenceMapper.class
+                                </exclude>
+                                <!-- Domain policy interfaces -->
+                                <exclude>
+                                    org/sandbox/prompts/domain/service/GroupAccessPolicy.class
+                                </exclude>
+                                <exclude>
+                                    org/sandbox/prompts/domain/service/GroupMembershipManagementPolicy.class
+                                </exclude>
+                                <exclude>
+                                    org/sandbox/prompts/domain/service/PromptAuthorizationPolicy.class
+                                </exclude>
+                                <!-- Persistence adapters require a live DB; excluded from unit coverage -->
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/persistence/*PersistenceAdapter.class
+                                </exclude>
+                                <exclude>
+                                    org/sandbox/prompts/infrastructure/persistence/PromptPersistenceAdapter.class
+                                </exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

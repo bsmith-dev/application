@@ -1,0 +1,91 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 04-group-members.http — Group membership CRUD
+#
+# Run order: after 03-groups.http (groupId and secondMemberId must be set in env)
+#
+# This mirrors the Members page role assignment flow: create/register a member
+# first, then assign their selected role within a selected group.
+#
+# Covers:
+#   GET    /api/groups/{groupId}/members                   — list members
+#   POST   /api/groups/{groupId}/members                   — add a member
+#   GET    /api/members                                    — verify effective member role
+#   PUT    /api/groups/{groupId}/members/{memberId}        — change member role
+#   DELETE /api/groups/{groupId}/members/{memberId}        — remove a member
+#
+# Prerequisites:
+#   authToken       — primary member (brian), who is already ADMIN of the group
+#   secondAuthToken — secondary member (ben), used to verify their own membership
+#   groupId         — the group created in 03-groups.http
+#   secondMemberId  — ben's memberId from 00-setup.http
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/7] List group members (only creator at this point)
+# Expected: 200 OK — array with one entry: brian as ADMIN.
+
+GET {{baseUrl}}/api/groups/{{groupId}}/members
+Authorization: Bearer {{authToken}}
+
+###
+
+### [2/7] Add secondary member (ben) as MEMBER
+# Expected: 201 Created
+# Response: { groupId, memberId, role: "MEMBER" }
+# Role choices: ADMIN | GROUP_LEAD | MEMBER
+
+POST {{baseUrl}}/api/groups/{{groupId}}/members
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "memberId": "{{secondMemberId}}",
+  "role": "MEMBER"
+}
+
+###
+
+### [3/7] List group members (should now show both brian and ben)
+# Expected: 200 OK — array with two entries.
+
+GET {{baseUrl}}/api/groups/{{groupId}}/members
+Authorization: Bearer {{authToken}}
+
+###
+
+### [4/7] List all members (ben should now have effective role MEMBER)
+# Expected: 200 OK — ben's MemberResponse role is "MEMBER".
+# This is the API surface shown by the Members page table.
+
+GET {{baseUrl}}/api/members
+Authorization: Bearer {{authToken}}
+
+###
+
+### [5/7] Secondary member lists the group (validates they can see it after being added)
+# Expected: 200 OK — group appears in ben's list.
+
+GET {{baseUrl}}/api/groups
+Authorization: Bearer {{secondAuthToken}}
+
+###
+
+### [6/7] Change ben's role from MEMBER to GROUP_LEAD
+# Expected: 200 OK
+# Response: { groupId, memberId, role: "GROUP_LEAD" }
+
+PUT {{baseUrl}}/api/groups/{{groupId}}/members/{{secondMemberId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "role": "GROUP_LEAD"
+}
+
+###
+
+### [7/7] Remove ben from the group
+# Expected: 204 No Content
+# After this, ben should no longer appear in the members list.
+
+DELETE {{baseUrl}}/api/groups/{{groupId}}/members/{{secondMemberId}}
+Authorization: Bearer {{authToken}}

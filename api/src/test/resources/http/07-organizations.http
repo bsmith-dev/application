@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 07-organizations.http — Organization CRUD (ADMIN only)
+#
+# Run order: after 03-groups.http. The primary member must have created a group
+# and therefore have ADMIN authority through group membership.
+#
+# Covers:
+#   GET    /api/organizations      — list all organizations
+#   POST   /api/organizations      — create an organization (public bootstrap)
+#   PUT    /api/organizations/{id} — rename an organization
+#   DELETE /api/organizations/{id} — delete an empty organization
+#   DELETE /api/organizations/{id} — 409 if members/groups still exist
+#
+# Set emptyOrganizationId in http-client.env.json for the rename/delete requests.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/5] List organizations as ADMIN
+# Expected: 200 OK — array containing at least the bootstrap organization.
+
+GET {{baseUrl}}/api/organizations
+Authorization: Bearer {{authToken}}
+
+###
+
+### [2/5] Create an empty organization
+# Expected: 201 Created
+# Response: { organizationId, name }
+# → Copy organizationId into http-client.env.json → "emptyOrganizationId"
+
+POST {{baseUrl}}/api/organizations
+Content-Type: application/json
+
+{
+  "name": "Empty Organization For CRUD"
+}
+
+###
+
+### [3/5] Rename empty organization as ADMIN
+# Expected: 200 OK
+# Requires: emptyOrganizationId from step [2/5]
+
+PUT {{baseUrl}}/api/organizations/{{emptyOrganizationId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Empty Organization For CRUD (renamed)"
+}
+
+###
+
+### [4/5] Delete empty organization as ADMIN
+# Expected: 204 No Content
+# Requires: emptyOrganizationId from step [2/5]
+
+DELETE {{baseUrl}}/api/organizations/{{emptyOrganizationId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### [5/5] Delete non-empty organization as ADMIN
+# Expected: 409 Conflict because the bootstrap organization has members/groups.
+# Requires: organizationId from 00-setup.http.
+
+DELETE {{baseUrl}}/api/organizations/{{organizationId}}
+Authorization: Bearer {{authToken}}

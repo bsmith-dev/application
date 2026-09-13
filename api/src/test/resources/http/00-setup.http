@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 00-setup.http — Bootstrap: create organization + register two members
+#
+# Run order: this file must be run FIRST on a clean database.
+#
+# After running:
+#   1. Copy the `organizationId` from the org response
+#      into http-client.env.json → "organizationId"
+#   2. Register both members using that organizationId
+#   3. Copy `memberId` from the primary member response → "primaryMemberId"
+#   4. Copy `memberId` from the secondary member response → "secondMemberId"
+#   5. Run 03-groups.http to create a group, then 04-group-members.http to assign
+#      the secondary member's selected group role.
+#
+# Public endpoints — no Authorization header required.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/3] Create organization
+# Expected: 201 Created
+# Response: { organizationId, name }
+# → Copy organizationId into http-client.env.json → "organizationId"
+
+POST {{baseUrl}}/api/organizations
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Org"
+}
+
+###
+
+### [2/3] Register primary member (brian)
+# Expected: 201 Created
+# Response: { memberId, organizationId, username, email, role }
+# → Copy memberId into http-client.env.json → "primaryMemberId"
+#
+# Requires: organizationId set in env from step [1/3]
+
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "username": "brian",
+  "password": "S3cure!pw",
+  "email": "brian@example.com",
+  "organizationId": "{{organizationId}}"
+}
+
+###
+
+### [3/3] Register secondary member (ben)
+# Expected: 201 Created
+# Response: { memberId, organizationId, username, email, role }
+# → Copy memberId into http-client.env.json → "secondMemberId"
+#
+# Used in 04-group-members.http to test the Members page pattern:
+# register a member, select a group, then assign the selected role.
+
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "username": "ben",
+  "password": "S3cure!pw",
+  "email": "ben@example.com",
+  "organizationId": "{{organizationId}}"
+}

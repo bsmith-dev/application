@@ -1,0 +1,257 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 06-error-cases.http — Negative path / error response coverage
+#
+# Run order: after 01-auth.http at minimum; some cases require groupId/promptId.
+#
+# These requests are EXPECTED to fail. Verify the HTTP status code and that
+# the response body is RFC 9457 Problem Details JSON
+# (fields: type, title, status, detail, instance).
+#
+# Grouped by error category:
+#   401 — Unauthenticated access
+#   400 — Bean validation failures
+#   400 — Malformed / type-mismatch input
+#   404 — Resource not found
+#   409 — Conflict
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── 401 Unauthenticated ───────────────────────────────────────────────────────
+
+### [401-1] Missing Authorization header on protected endpoint
+# Expected: 401 Unauthorized
+
+GET {{baseUrl}}/api/groups
+
+###
+
+### [401-2] Malformed / non-JWT Bearer token
+# Expected: 401 Unauthorized
+
+GET {{baseUrl}}/api/groups
+Authorization: Bearer this.is.not.a.valid.jwt
+
+###
+
+### [401-3] Missing auth on member profile endpoint
+# Expected: 401 Unauthorized
+
+GET {{baseUrl}}/api/members/me
+
+###
+
+### [401-4] Missing auth on prompts endpoint
+# Expected: 401 Unauthorized
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts
+
+###
+
+# ── 400 Validation failures ───────────────────────────────────────────────────
+
+### [400-1] Login — password below minimum length (min 8 chars)
+# Expected: 400 Bad Request — Problem Details with constraint violation detail.
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "brian",
+  "password": "short"
+}
+
+###
+
+### [400-2] Login — missing username field
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "password": "S3cure!pw"
+}
+
+###
+
+### [400-3] Register member — blank email
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "username": "noemail",
+  "password": "S3cure!pw",
+  "email": "",
+  "organizationId": "{{organizationId}}"
+}
+
+###
+
+### [400-4] Register member — invalid email format
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "username": "bademail",
+  "password": "S3cure!pw",
+  "email": "not-an-email",
+  "organizationId": "{{organizationId}}"
+}
+
+###
+
+### [400-5] Register member — missing organizationId
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/members
+Content-Type: application/json
+
+{
+  "username": "noorgs",
+  "password": "S3cure!pw",
+  "email": "noorgs@example.com"
+}
+
+###
+
+### [400-6] Create organization — blank name
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/organizations
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+###
+
+### [400-7] Create group — blank name
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/groups
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": ""
+}
+
+###
+
+### [400-8] Create prompt — blank title
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "content": "Some content here"
+}
+
+###
+
+### [400-9] Create prompt — missing content field
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/groups/{{groupId}}/prompts
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "No content prompt"
+}
+
+###
+
+### [400-10] Add group member — null role (role is @NotNull)
+# Expected: 400 Bad Request
+
+POST {{baseUrl}}/api/groups/{{groupId}}/members
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "memberId": "{{secondMemberId}}"
+}
+
+###
+
+# ── 400 Type / format mismatch ────────────────────────────────────────────────
+
+### [400-11] Get group — groupId is not a valid UUID
+# Expected: 400 Bad Request (MethodArgumentTypeMismatchException)
+
+GET {{baseUrl}}/api/groups/not-a-uuid
+Authorization: Bearer {{authToken}}
+
+###
+
+### [400-12] Get prompt — promptId is not a valid UUID
+# Expected: 400 Bad Request
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts/not-a-uuid
+Authorization: Bearer {{authToken}}
+
+###
+
+# ── 404 Not found ─────────────────────────────────────────────────────────────
+
+### [404-1] Get group — valid UUID format but does not exist
+# Expected: 404 Not Found — Problem Details body.
+
+GET {{baseUrl}}/api/groups/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{authToken}}
+
+###
+
+### [404-2] Get group members — group does not exist
+# Expected: 404 Not Found
+
+GET {{baseUrl}}/api/groups/00000000-0000-0000-0000-000000000000/members
+Authorization: Bearer {{authToken}}
+
+###
+
+### [404-3] Get prompt — valid UUID but prompt does not exist
+# Expected: 404 Not Found
+
+GET {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{authToken}}
+
+###
+
+### [404-4] Update prompt — prompt does not exist
+# Expected: 404 Not Found
+
+PUT {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Ghost Prompt",
+  "content": "This prompt does not exist."
+}
+
+###
+
+### [404-5] Delete prompt — prompt does not exist
+# Expected: 404 Not Found
+
+DELETE {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{authToken}}
+
+###
+
+# ── 409 Conflict ──────────────────────────────────────────────────────────────
+
+### [409-1] Delete non-empty organization
+# Expected: 409 Conflict because the org still has members and/or groups.
+
+DELETE {{baseUrl}}/api/organizations/{{organizationId}}
+Authorization: Bearer {{authToken}}

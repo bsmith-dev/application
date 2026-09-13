@@ -1,0 +1,44 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 01-auth.http — Authentication: obtain JWT tokens for both members
+#
+# Run order: after 00-setup.http
+#
+# After running:
+#   1. Copy the `token` from the primary login response
+#      into http-client.env.json → "authToken"
+#   2. Copy the `token` from the secondary login response
+#      into http-client.env.json → "secondAuthToken"
+#
+# All subsequent files use {{authToken}} as the primary Bearer credential.
+# 04-group-members.http uses {{secondAuthToken}} for cross-user scenarios.
+#
+# Public endpoint — no Authorization header required.
+# ─────────────────────────────────────────────────────────────────────────────
+
+### [1/2] Login as primary member (brian)
+# Expected: 200 OK
+# Response: { token }
+# → Copy token into http-client.env.json → "authToken"
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "brian",
+  "password": "S3cure!pw"
+}
+
+###
+
+### [2/2] Login as secondary member (ben)
+# Expected: 200 OK
+# Response: { token }
+# → Copy token into http-client.env.json → "secondAuthToken"
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "ben",
+  "password": "S3cure!pw"
+}
