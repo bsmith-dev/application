@@ -1,0 +1,17 @@
+services:
+  database:
+    image: mariadb:11.4.5
+    container_name: database-container
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: sandboxdb
+      MARIADB_USER: dev
+      MARIADB_PASSWORD: pass
+    volumes:
+      # Persists database state across container restarts or teardowns
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
