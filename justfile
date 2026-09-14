@@ -31,7 +31,7 @@ lifecycle:
     just --justfile api/justfile verify
     just --justfile api/justfile up
     just --justfile api/justfile wait
-    just --justfile api/justfile integration-test
+    just --justfile api/justfile integration
 
     echo ""
     echo "✓ CI lifecycle complete."

@@ -60,7 +60,7 @@ wait:
     set -euo pipefail
 
     echo "Waiting for database..."
-    until docker compose exec database mariaadmin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
+    until docker compose exec database mariadb-admin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
         if [ "${SECONDS}" -ge 30 ]; then
             echo "Database did not become ready in 30 s"
             exit 1

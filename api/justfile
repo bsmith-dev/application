@@ -41,7 +41,8 @@ up:
 
     JAVA_HOME=$(/usr/libexec/java_home -v 25)
     export PATH="$JAVA_HOME/bin:$PATH"
-    $JAVA_HOME/bin/java -jar target/1.0.0-SNAPSHOT.jar > target/app.log 2>&1 &
+    VERSION=$(../mvnw -f ../pom.xml -pl api -q help:evaluate -Dexpression=project.version -DforceStdout)
+    $JAVA_HOME/bin/java -jar "target/api-${VERSION}.jar" > target/app.log 2>&1 &
     echo "$!" > target/app.pid
     echo "Started app (pid $(cat target/app.pid)). Logs: target/app.log"
 
@@ -78,7 +79,7 @@ package:
     ./mvnw package -DskipTests -q
 
 # Run all HTTP request tests in src/test/resources/http using the dev env file
-integration-test:
+integration:
     #!/usr/bin/env bash
     set -euo pipefail
 
