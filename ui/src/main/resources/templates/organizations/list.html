@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Organizations')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1>Organizations</h1>
+        <a class="button" th:href="@{/organizations/new}">Create organization</a>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(organizations)}">
+        <p>No organizations yet.</p>
+        <a class="button" th:href="@{/organizations/new}">Create the first organization</a>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(organizations)}">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Organization ID</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="org : ${organizations}">
+            <td th:text="${org.name}">Name</td>
+            <td th:text="${org.organizationId}">id</td>
+            <td class="actions-cell">
+                <a th:href="@{/organizations/{id}/edit(id=${org.organizationId})}">Edit</a>
+                <a th:href="@{/organizations/{id}/delete(id=${org.organizationId})}">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

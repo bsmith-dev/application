@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Service unavailable')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div class="error-page">
+        <div class="code">503</div>
+        <h1>The API is unavailable right now</h1>
+        <p>Check that the API is running and that <code>app.api.base-url</code> is correct, then try again.</p>
+        <p class="detail" th:text="${detail}">Detail</p>
+        <p><a th:href="@{/dashboard}">Back to dashboard</a></p>
+    </div>
+</main>
+</body>
+</html>

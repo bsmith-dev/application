@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Conflict')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div class="error-page">
+        <div class="code">409</div>
+        <h1>This change conflicts with the current state</h1>
+        <p>The API could not complete the request because of a conflicting business rule.</p>
+        <p class="detail" th:text="${detail}">Detail</p>
+        <p><a th:href="@{/dashboard}">Back to dashboard</a></p>
+    </div>
+</main>
+</body>
+</html>

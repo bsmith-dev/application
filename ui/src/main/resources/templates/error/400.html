@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Request rejected')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div class="error-page">
+        <div class="code">400</div>
+        <h1>The API rejected this request</h1>
+        <p>Double-check the values you entered and try again.</p>
+        <p class="detail" th:text="${detail}">Detail</p>
+        <p><a th:href="@{/dashboard}">Back to dashboard</a></p>
+    </div>
+</main>
+</body>
+</html>

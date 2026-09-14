@@ -1,18 +1,149 @@
 set shell := ["bash", "-cu"]
+set dotenv-load := true
 
-mvn := "../mvnw -f ../pom.xml -pl ui"
+mvn         := "../mvnw -f ../pom.xml -pl ui"
+mvn_local   := "./mvnw -f pom.xml"
+mvn_quiet   := "MAVEN_OPTS='--sun-misc-unsafe-memory-access=allow' ../mvnw -q -f ../pom.xml -pl ui"
+jar_path    := "target/prompt-db-ui.jar"
+app_port    := "8083"
+app_url     := "http://localhost:8083"
+app_pid_file := "target/ui.pid"
+app_log_file := "target/ui.log"
+java_version := "25"
+health_path := "/actuator/health"
+
+# List all available recipes.
+default:
+    @just --list
 
 # Build the UI module and all required upstream modules.
 build:
     {{mvn}} -am clean verify
 
+# Run all tests and enforce the JaCoCo line/branch coverage gate.
+verify:
+    {{mvn_local}} clean verify
+
 # Test the UI module and all required upstream modules.
 test:
     {{mvn}} -am test
 
-# Remove UI module ui-build output.
+# Run unit tests against the local module only.
+test-unit:
+    {{mvn_local}} test
+
+# Run a single test class by simple name, e.g. `just test-class DashboardControllerTest`
+test-class name:
+    {{mvn_local}} -Dtest='{{name}}' test
+
+# Remove UI module build output.
 clean:
     {{mvn}} clean
 
-default:
-    @just --list
+# Start the UI in the foreground (API must already be up).
+run:
+    {{mvn_local}} spring-boot:run
+
+# Build the executable fat JAR, skipping tests.
+package:
+    {{mvn_local}} package -DskipTests -q
+
+# Start the packaged UI in the background.
+up:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if kill -0 "${PID}" 2>/dev/null; then
+            echo "UI is already running (pid ${PID}). Stop it first with 'just stop'." >&2
+            exit 1
+        fi
+        rm -f {{app_pid_file}}
+    fi
+
+    PID=$(lsof -ti tcp:{{app_port}} 2>/dev/null | head -n 1 || true)
+    if [ -n "${PID}" ]; then
+        echo "Port :{{app_port}} is already in use by pid ${PID}. Stop it first with 'just stop'." >&2
+        exit 1
+    fi
+
+    JAVA_HOME=$(/usr/libexec/java_home -v {{java_version}})
+    if [ ! -f {{jar_path}} ]; then
+        echo "Expected packaged JAR '{{jar_path}}' not found. Run 'just package' first." >&2
+        exit 1
+    fi
+
+    "$JAVA_HOME/bin/java" -jar {{jar_path}} > {{app_log_file}} 2>&1 &
+    echo "$!" > {{app_pid_file}}
+    echo "Started UI (pid $(cat {{app_pid_file}})). Logs: {{app_log_file}}"
+
+# Stop the UI if it is running.
+stop:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if kill -0 "${PID}" 2>/dev/null; then
+            kill "${PID}"
+            rm -f {{app_pid_file}}
+            echo "Stopped UI (pid ${PID})."
+            exit 0
+        fi
+        rm -f {{app_pid_file}}
+    fi
+
+    PID=$(lsof -ti tcp:{{app_port}} 2>/dev/null | head -n 1 || true)
+    if [ -n "${PID}" ]; then
+        kill "${PID}"
+        echo "Stopped UI on :{{app_port}} (pid ${PID})."
+    else
+        echo "No UI running on :{{app_port}}."
+    fi
+    rm -f {{app_pid_file}}
+
+# Wait until the UI is accepting HTTP connections on :8083 (polls up to 60 s).
+wait:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if ! kill -0 "${PID}" 2>/dev/null; then
+            echo "UI process ${PID} is not running. Check {{app_log_file}} or start it again." >&2
+            rm -f {{app_pid_file}}
+            exit 1
+        fi
+    elif ! lsof -ti tcp:{{app_port}} >/dev/null 2>&1; then
+        echo "No UI appears to be running on :{{app_port}}. Start it first with 'just run' or 'just up'." >&2
+        exit 1
+    else
+        echo "UI is listening on :{{app_port}}, but it was not started by 'just up'. Check that process before waiting." >&2
+        exit 1
+    fi
+
+    echo "Waiting for UI on :{{app_port}}..."
+    for i in $(seq 1 60); do
+        if [ -f {{app_pid_file}} ]; then
+            PID=$(cat {{app_pid_file}})
+            if ! kill -0 "${PID}" 2>/dev/null; then
+                echo "UI process ${PID} exited before becoming ready. Check {{app_log_file}}." >&2
+                rm -f {{app_pid_file}}
+                exit 1
+            fi
+        fi
+
+        CODE=$(curl -s -o /dev/null -w "%{http_code}" {{app_url}}{{health_path}} 2>/dev/null || true)
+        if [ -n "${CODE}" ] && [ "${CODE}" != "000" ]; then
+            echo "UI ready (HTTP ${CODE})."
+            exit 0
+        fi
+        sleep 1
+    done
+    echo "UI did not become ready in 60 s." >&2
+    exit 1
+
+# Open the HTML coverage report in the default browser (macOS).
+coverage:
+    open target/site/jacoco/index.html

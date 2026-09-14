@@ -90,7 +90,7 @@ wait:
     }
 
     echo "Waiting for database..."
-    until {{compose}} exec -T {{db_service}} mariadb -u root -p"${DB_PASSWORD}" -e "SELECT 1" {{db_name}} >/dev/null 2>&1; do
+    until {{compose}} exec -T {{db_service}} mariadb -u root -p"${DB_PASSWORD}" {{db_name}} -e "SELECT 1" >/dev/null 2>&1; do
         if [ "${SECONDS}" -ge 30 ]; then
             echo "Database did not become ready in 30 s"
             exit 1

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${editing} ? 'Edit organization' : 'Create organization')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb"><a th:href="@{/organizations}">Organizations</a> / <span th:text="${editing} ? 'Edit' : 'New'">New</span></p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="card" style="max-width:520px;">
+        <h1 style="font-size:1.2rem;margin-top:0;" th:text="${editing} ? 'Edit organization' : 'Create organization'">Organization</h1>
+
+        <form method="post"
+              th:action="${editing} ? @{/organizations/{id}(id=${organizationId})} : @{/organizations}"
+              th:object="${organizationForm}">
+
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label for="name">Organization name</label>
+                <input id="name" type="text" th:field="*{name}" th:errorclass="input-error" autofocus="autofocus"/>
+                <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Invalid</p>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Save</button>
+                <a class="button secondary" th:href="@{/organizations}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

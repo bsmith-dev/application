@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Change role · ' + ${group.name})}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb">
+        <a th:href="@{/groups}">Groups</a> / <a th:href="@{/groups/{id}(id=${group.groupId})}" th:text="${group.name}">Name</a> /
+        <a th:href="@{/groups/{id}/members(id=${group.groupId})}">Members</a> / Change role
+    </p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="card" style="max-width:520px;">
+        <h1 style="font-size:1.2rem;margin-top:0;">Change membership role</h1>
+        <p class="hint">Member ID: <span th:text="${memberId}">id</span></p>
+
+        <form method="post" th:action="@{/groups/{gid}/members/{mid}(gid=${group.groupId},mid=${memberId})}" th:object="${changeRoleForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label for="role">Role</label>
+                <select id="role" th:field="*{role}" th:errorclass="input-error">
+                    <option th:each="r : ${T(com.example.promptdb.api.dto.Role).values()}" th:value="${r}" th:text="${r}">ROLE</option>
+                </select>
+                <p class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">Invalid</p>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Save</button>
+                <a class="button secondary" th:href="@{/groups/{id}/members(id=${group.groupId})}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

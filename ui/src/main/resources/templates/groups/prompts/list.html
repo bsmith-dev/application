@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Prompts · ' + ${group.name})}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb"><a th:href="@{/groups}">Groups</a> / <a th:href="@{/groups/{id}(id=${group.groupId})}" th:text="${group.name}">Name</a> / Prompts</p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="tabs">
+        <a th:href="@{/groups/{id}(id=${group.groupId})}">Overview</a>
+        <a th:href="@{/groups/{id}/members(id=${group.groupId})}">Members</a>
+        <a class="active" th:href="@{/groups/{id}/prompts(id=${group.groupId})}">Prompts</a>
+    </div>
+
+    <div class="page-heading">
+        <h1 style="font-size:1.2rem;">Prompts</h1>
+        <a class="button" th:if="${permissions.canCreatePrompt}" th:href="@{/groups/{id}/prompts/new(id=${group.groupId})}">New prompt</a>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(prompts)}">
+        <p>No prompts in this group yet.</p>
+        <a class="button" th:if="${permissions.canCreatePrompt}" th:href="@{/groups/{id}/prompts/new(id=${group.groupId})}">Create the first prompt</a>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(prompts)}">
+        <thead>
+        <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Created by</th>
+            <th scope="col">Updated</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${prompts}">
+            <td><a th:href="@{/groups/{gid}/prompts/{pid}(gid=${group.groupId},pid=${p.id})}" th:text="${p.title}">Title</a></td>
+            <td th:text="${p.createdBy}">id</td>
+            <td th:text="${p.updatedAt}">timestamp</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

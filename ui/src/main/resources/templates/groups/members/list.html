@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Members · ' + ${group.name})}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb"><a th:href="@{/groups}">Groups</a> / <a th:href="@{/groups/{id}(id=${group.groupId})}" th:text="${group.name}">Name</a> / Members</p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="tabs">
+        <a th:href="@{/groups/{id}(id=${group.groupId})}">Overview</a>
+        <a class="active" th:href="@{/groups/{id}/members(id=${group.groupId})}">Members</a>
+        <a th:href="@{/groups/{id}/prompts(id=${group.groupId})}">Prompts</a>
+    </div>
+
+    <div class="page-heading">
+        <h1 style="font-size:1.2rem;">Group members</h1>
+        <a class="button" th:if="${permissions.canManageMembers}" th:href="@{/groups/{id}/members/new(id=${group.groupId})}">Add member</a>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(memberships)}">
+        <p>No members in this group yet.</p>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(memberships)}">
+        <thead>
+        <tr>
+            <th scope="col">Member ID</th>
+            <th scope="col">Role</th>
+            <th scope="col" th:if="${permissions.canManageMembers}">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${memberships}">
+            <td th:text="${m.memberId}">id</td>
+            <td><span class="badge" th:classappend="'role-' + ${m.role}" th:text="${m.role}">ROLE</span></td>
+            <td class="actions-cell" th:if="${permissions.canManageMembers}">
+                <a th:href="@{/groups/{gid}/members/{mid}/edit(gid=${group.groupId},mid=${m.memberId})}">Change role</a>
+                <form method="post" th:action="@{/groups/{gid}/members/{mid}/delete(gid=${group.groupId},mid=${m.memberId})}" style="display:inline;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="button small danger" onclick="return confirm('Remove this member from the group?');">Remove</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

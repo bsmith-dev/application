@@ -1,0 +1,24 @@
+<!doctype html>
+<html xmlns:th="https://www.thymeleaf.org">
+<body>
+<header class="app-header" th:fragment="navigation">
+    <div class="bar">
+        <a class="brand" th:href="@{/dashboard}">prompt_db</a>
+        <nav class="primary-nav" th:if="${authenticated}">
+            <a th:href="@{/dashboard}">Dashboard</a>
+            <a th:href="@{/groups}">Groups</a>
+            <a th:href="@{/members}">Members</a>
+            <a th:href="@{/organizations}" th:if="${isAdmin}">Organizations</a>
+        </nav>
+        <div class="user-chip" th:if="${authenticated}">
+            <span th:text="${currentMember.username}">username</span>
+            <span class="role-badge" th:text="${currentMember.role}">ROLE</span>
+            <a th:href="@{/logout}">Sign out</a>
+        </div>
+        <div class="user-chip" th:unless="${authenticated}">
+            <a th:href="@{/login}">Sign in</a>
+        </div>
+    </div>
+</header>
+</body>
+</html>

@@ -23,7 +23,7 @@ A multi-tenant REST API for storing and managing AI prompts, built with Spring B
 
 | Tool | Version | Purpose |
 |---|---|---|
-| Java | 21+ | Runtime and compilation |
+| Java | 25 | Runtime and compilation |
 | Maven wrapper | included (`./mvnw`) | Build |
 | Docker | any recent | MariaDB container |
 | just | 1.x (`brew install just`) | Task runner |
@@ -36,15 +36,22 @@ A multi-tenant REST API for storing and managing AI prompts, built with Spring B
 
 ```bash
 # 1. Copy environment template and review defaults
-cp .env.example .env
+cp database/.env.example database/.env
 
 # 2. Start the database, wait for it to be ready, then start the application
 just start
 ```
 
-The application starts on `http://localhost:8080`.
+The API starts on `http://localhost:8080`. The UI webapp starts on `http://localhost:8083` (requires the API to be running).
 
-To run the HTTP request workflow against a running instance:
+To also start the UI in the background:
+
+```bash
+just ui-up
+just ui-wait
+```
+
+To run the HTTP request workflow against a running API instance:
 
 ```bash
 just test-http
@@ -60,10 +67,14 @@ just ci
 
 ## Configuration
 
-Environment variables are loaded from `.env` in the project root. Copy `.env.example` to get started:
+Each module loads environment variables from a `.env` file in its own directory. All variables have working development defaults, so no `.env` files are required to run locally.
+
+### Database and API (`database/.env`)
+
+The database module's `just` tasks (Flyway, seed, shell) load credentials from `database/.env`. Copy the example to get started:
 
 ```bash
-cp .env.example .env
+cp database/.env.example database/.env
 ```
 
 | Variable | Default (dev) | Description |
@@ -76,7 +87,18 @@ cp .env.example .env
 
 > **Note:** The default `JWT_SECRET` is intentionally insecure. Set a strong random value for any shared or production environment.
 
-`.env` is listed in `.gitignore` and will not be committed. `.env.example` is tracked and shows the required variable names.
+The API reads the same variables from the process environment via `${VAR:default}` placeholders in `api/src/main/resources/application.yml`. For development, the hardcoded defaults match the Docker Compose database setup, so no `api/.env` is needed. To override, create `api/.env` with the variables you want to change.
+
+### UI (`ui/.env`)
+
+The UI module reads two optional overrides from `ui/.env`. Both have working defaults in `ui/src/main/resources/application.yml`:
+
+| Variable | Default (dev) | Description |
+|---|---|---|
+| `SERVER_PORT` | `8083` | HTTP port the UI server listens on |
+| `API_BASE_URL` | `http://localhost:8080` | Base URL the UI uses to reach the API |
+
+`.env` files are listed in `.gitignore` and will not be committed. `.env.example` files are tracked and show the required variable names.
 
 ### Database
 
@@ -101,9 +123,9 @@ Sample data is kept out of Flyway so it never runs automatically in production-l
 ## Project structure
 
 ```
-src/
-  main/
-    java/org/sandbox/prompts/
+api/                          # Spring Boot REST API (port 8080)
+  src/
+    main/java/org/sandbox/prompts/
       domain/          # Pure domain model — no framework dependencies
         model/         # Entities, value objects, enums (Member, Group, Prompt, Role, …)
         service/       # Domain policy interfaces and default implementations
@@ -118,19 +140,32 @@ src/
       presentation/    # HTTP layer
         rest/          # Controllers, PromptsExceptionHandler
     resources/
-      db/migration/    # Flyway SQL migrations (V1–V3)
-      application.properties
-      static/          # Browser UI (index.html, app.html, app.js, style.css)
-  test/
-    java/org/sandbox/
-      ArchitectureComplianceTest.java   # ArchUnit ring-dependency rules
-      prompts/
-        domain/        # Domain model and policy unit tests
-        application/   # Service unit tests (Mockito)
-        presentation/  # Controller MockMvc tests (standalone + JWT filter)
-        infrastructure/security/  # JwtService and JwtAuthFilter unit tests
-scripts/
-  seed-sample-data.sql  # Manual local/dev sample dataset
+      application.yml
+    test/
+      java/org/sandbox/
+        ArchitectureComplianceTest.java   # ArchUnit ring-dependency rules
+        prompts/
+          domain/        # Domain model and policy unit tests
+          application/   # Service unit tests (Mockito)
+          presentation/  # Controller MockMvc tests (standalone + JWT filter)
+          infrastructure/security/  # JwtService and JwtAuthFilter unit tests
+      resources/http/    # httpyac .http request files and http-client.env.json
+database/                     # Database module (Docker Compose + Flyway)
+  scripts/
+    seed-sample-data.sql      # Manual local/dev sample dataset
+  src/main/resources/db/migration/   # Flyway SQL migrations (V1–V3)
+ui/                           # Spring Boot + Thymeleaf CRUD webapp (port 8083)
+  src/
+    main/
+      java/com/example/promptdb/
+        api/           # REST API client adapters and response DTOs
+        config/        # WebClient and security configuration
+        form/          # Thymeleaf form-binding objects
+        service/       # Session, authentication, and group-context services
+      resources/
+        templates/     # Thymeleaf HTML templates (layouts, fragments, CRUD views)
+        application.yml
+    test/
 ```
 
 ---
@@ -381,7 +416,7 @@ prompts
 
 ## Sample seed data
 
-The repository includes a manual seed script at `scripts/seed-sample-data.sql`. It is not a Flyway migration and is not loaded by application startup.
+The repository includes a manual seed script at `database/scripts/seed-sample-data.sql`. It is not a Flyway migration and is not loaded by application startup.
 
 Run it after the database is up and Flyway has created the schema:
 
@@ -453,28 +488,37 @@ just              # list all recipes
 
 | Recipe | Description |
 |---|---|
-| `just ci` | Full local lifecycle: stop the app, rebuild the DB, verify the API, package the JAR, start it in the background, wait for readiness, then run the documented HTTP workflow |
+| `just ci` | Full local lifecycle: stop the API, rebuild the DB, verify and package the API, start it in the background, wait for readiness, then run the documented HTTP workflow |
+| `just start` | Start the local database and run the API in the foreground |
+| `just build` | Build all Maven modules through the root reactor |
+| `just test` | Run unit tests in every module |
+| `just clean` | Remove Maven build output from every module |
+| **API** | |
+| `just app-run` | Run the API in the foreground (database must already be up) |
+| `just app-stop` | Stop the packaged API if it is running |
+| `just app-verify` | Run the full Maven verification gate, including the JaCoCo coverage check |
+| `just package` | Build the packaged API JAR, skipping tests |
+| `just coverage` | Open the API HTML coverage report in the browser |
+| `just test-unit` | Run the full API unit and MockMvc test suite |
+| `just test-class <Name>` | Run a single API test class, e.g. `just test-class MemberServiceTest` |
+| `just test-http` | Run all HTTP request tests in `api/src/test/resources/http` with the `dev` environment |
+| **UI** | |
+| `just ui-run` | Run the UI in the foreground (API must already be up) |
+| `just ui-stop` | Stop the packaged UI if it is running |
+| `just ui-verify` | Run the full UI Maven verification gate, including the JaCoCo coverage check |
+| `just ui-package` | Build the packaged UI JAR, skipping tests |
+| `just ui-coverage` | Open the UI HTML coverage report in the browser |
+| **Database** | |
 | `just db-start` | Start the MariaDB container and wait until it is ready |
-| `just app-run` | Run the application (database must already be up) |
-| `just app-up` | Start the packaged application in the background and write logs to `target/app.log` |
-| `just app-stop` | Stop any app process listening on `localhost:8080` |
-| `just app-wait` | Wait until the app accepts HTTP connections on `localhost:8080` |
 | `just db-up` | Start the MariaDB container |
 | `just db-wait` | Block until the database is accepting connections |
 | `just db-down` | Stop the container (data persists) |
 | `just db-destroy` | Stop the container and delete the data volume |
 | `just db-logs` | Follow database container logs |
 | `just db-shell` | Open an interactive `mariadb` shell |
-| `just db-migrate` | Run Flyway migrations manually using `.env` database settings |
+| `just db-migrate` | Run Flyway migrations manually using `database/.env` credentials |
 | `just db-seed-sample` | Load the manual local sample dataset |
 | `just db-rebuild` | Destroy, recreate, migrate, and seed the local database |
-| `just build` | Build all Maven modules through the root reactor |
-| `just package` | Build the fat JAR (`target/api-<version>.jar`) |
-| `just coverage` | Open the HTML coverage report in the browser |
-| `just app-verify` | Run the full Maven verification gate, including the JaCoCo coverage check |
-| `just test-class <Name>` | Run a single test class, e.g. `just test-class MemberServiceTest` |
-| `just test-unit` | Run the full unit and MockMvc test suite |
-| `just test-http` | Run all HTTP request tests under `src/test/resources/http` with the `dev` environment |
 
 ### First-time setup
 
@@ -485,13 +529,13 @@ brew install just jq
 # Clone and configure
 git clone <repo-url>
 cd prompt-db
-cp .env.example .env   # edit if needed
+cp database/.env.example database/.env   # edit if needed
 
 # Start the database only
 just db-start
 ```
 
-### Running only the application (database already running)
+### Running the API (database already running)
 
 ```bash
 just app-run
@@ -504,10 +548,29 @@ just app-up
 just app-wait
 ```
 
-To stop a running local app on `localhost:8080`:
+To stop a running local API on `localhost:8080`:
 
 ```bash
 just app-stop
+```
+
+### Running the UI (API already running)
+
+```bash
+just ui-run
+```
+
+To run the packaged UI JAR in the background and wait for it to accept HTTP connections:
+
+```bash
+just ui-up
+just ui-wait
+```
+
+To stop the UI on `localhost:8083`:
+
+```bash
+just ui-stop
 ```
 
 ### Resetting the database
@@ -557,13 +620,6 @@ Enforces the JaCoCo coverage gate configured in `api/pom.xml`. The HTML report i
 
 ```bash
 just coverage   # open the report in the browser
-```
-
-### Running a single test class
-
-```bash
-just test-class PromptServiceTest
-just test-class MemberControllerTest
 ```
 
 ### HTTP request tests

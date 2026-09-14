@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${group.name})}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb"><a th:href="@{/groups}">Groups</a> / <span th:text="${group.name}">Name</span></p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1 th:text="${group.name}">Group name</h1>
+        <div class="actions" style="margin-top:0;">
+            <a class="button secondary" th:if="${permissions.canEditGroup}" th:href="@{/groups/{id}/edit(id=${group.groupId})}">Rename</a>
+            <a class="button danger" th:if="${permissions.canDeleteGroup}" th:href="@{/groups/{id}/delete(id=${group.groupId})}">Delete</a>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <a class="active" th:href="@{/groups/{id}(id=${group.groupId})}">Overview</a>
+        <a th:href="@{/groups/{id}/members(id=${group.groupId})}">Members</a>
+        <a th:href="@{/groups/{id}/prompts(id=${group.groupId})}">Prompts</a>
+    </div>
+
+    <div class="card">
+        <ul class="meta-list">
+            <li><span class="label">Group ID</span><span th:text="${group.groupId}">id</span></li>
+            <li><span class="label">Organization ID</span><span th:text="${group.organizationId}">id</span></li>
+        </ul>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${prompt.title})}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb">
+        <a th:href="@{/groups}">Groups</a> / <a th:href="@{/groups/{id}(id=${group.groupId})}" th:text="${group.name}">Name</a> /
+        <a th:href="@{/groups/{id}/prompts(id=${group.groupId})}">Prompts</a> / <span th:text="${prompt.title}">Title</span>
+    </p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1 th:text="${prompt.title}">Title</h1>
+        <div class="actions" style="margin-top:0;">
+            <a class="button secondary" th:if="${canEdit}" th:href="@{/groups/{gid}/prompts/{pid}/edit(gid=${group.groupId},pid=${prompt.id})}">Edit</a>
+            <a class="button danger" th:if="${canEdit}" th:href="@{/groups/{gid}/prompts/{pid}/delete(gid=${group.groupId},pid=${prompt.id})}">Delete</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <ul class="meta-list">
+            <li><span class="label">Created by</span><span th:text="${prompt.createdBy}">id</span></li>
+            <li><span class="label">Created at</span><span th:text="${prompt.createdAt}">timestamp</span></li>
+            <li><span class="label">Updated at</span><span th:text="${prompt.updatedAt}">timestamp</span></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2 style="font-size:0.95rem;margin-top:0;color:var(--color-muted);">Content</h2>
+        <div class="prompt-content" th:text="${prompt.content}">Content</div>
+    </div>
+</main>
+</body>
+</html>

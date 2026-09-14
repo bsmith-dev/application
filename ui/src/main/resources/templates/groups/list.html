@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Groups')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1>Groups</h1>
+        <a class="button" th:href="@{/groups/new}">Create group</a>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(groups)}">
+        <p>No groups yet.</p>
+        <a class="button" th:href="@{/groups/new}">Create the first group</a>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(groups)}">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Organization ID</th>
+            <th scope="col">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="g : ${groups}">
+            <td><a th:href="@{/groups/{id}(id=${g.groupId})}" th:text="${g.name}">Name</a></td>
+            <td th:text="${g.organizationId}">id</td>
+            <td class="actions-cell">
+                <a th:href="@{/groups/{id}(id=${g.groupId})}">Open</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

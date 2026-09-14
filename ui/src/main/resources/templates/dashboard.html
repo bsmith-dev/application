@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1>Welcome back<span th:if="${member}">, <span th:text="${member.username}">user</span></span></h1>
+    </div>
+
+    <div class="card" th:if="${member}">
+        <ul class="meta-list">
+            <li><span class="label">Username</span><span th:text="${member.username}">username</span></li>
+            <li><span class="label">Email</span><span th:text="${member.email}">email</span></li>
+            <li><span class="label">Role</span><span class="badge" th:classappend="'role-' + ${member.role}" th:text="${member.role}">ROLE</span></li>
+            <li><span class="label">Member ID</span><span th:text="${member.memberId}">id</span></li>
+            <li><span class="label">Organization ID</span><span th:text="${member.organizationId}">id</span></li>
+        </ul>
+    </div>
+
+    <div class="page-heading"><h2 style="margin:0;font-size:1.1rem;">Quick links</h2></div>
+    <div class="card">
+        <p><a th:href="@{/groups}">Browse groups</a> - view groups you belong to and their prompts.</p>
+        <p><a th:href="@{/members}">Member directory</a> - see everyone registered in the API.</p>
+        <p th:if="${isAdmin}"><a th:href="@{/organizations}">Manage organizations</a> - admin-only.</p>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Members')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="page-heading">
+        <h1>Members</h1>
+        <a class="button secondary" th:href="@{/register}">Register a member</a>
+    </div>
+
+    <div class="empty-state" th:if="${#lists.isEmpty(members)}">
+        <p>No members registered yet.</p>
+    </div>
+
+    <table th:unless="${#lists.isEmpty(members)}">
+        <thead>
+        <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Role</th>
+            <th scope="col">Member ID</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${members}">
+            <td th:text="${m.username}">username</td>
+            <td th:text="${m.email}">email</td>
+            <td><span class="badge" th:classappend="'role-' + ${m.role}" th:text="${m.role}">ROLE</span></td>
+            <td th:text="${m.memberId}">id</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

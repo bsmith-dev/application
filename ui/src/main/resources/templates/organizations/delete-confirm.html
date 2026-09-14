@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Delete organization')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <p class="breadcrumb"><a th:href="@{/organizations}">Organizations</a> / Delete</p>
+    <div th:replace="~{fragments/alerts :: messages}"></div>
+
+    <div class="card" style="max-width:520px;">
+        <h1 style="font-size:1.2rem;margin-top:0;">Delete organization?</h1>
+        <p>You are about to delete <strong th:text="${organization.name}">Name</strong>.</p>
+        <p class="hint">The API only allows this when the organization has no members or groups left.</p>
+
+        <form method="post" th:action="@{/organizations/{id}/delete(id=${organization.organizationId})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="actions">
+                <button type="submit" class="danger">Delete organization</button>
+                <a class="button secondary" th:href="@{/organizations}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

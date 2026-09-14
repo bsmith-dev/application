@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Register')}"></head>
+<body>
+<div th:replace="~{fragments/navigation :: navigation}"></div>
+<main class="container">
+    <div class="auth-container">
+        <h1>Create your account</h1>
+        <div th:replace="~{fragments/alerts :: messages}"></div>
+
+        <form method="post" th:action="@{/register}" th:object="${registerForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="field">
+                <label for="username">Username</label>
+                <input id="username" type="text" th:field="*{username}" th:errorclass="input-error"/>
+                <p class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Invalid</p>
+            </div>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <input id="email" type="email" th:field="*{email}" th:errorclass="input-error"/>
+                <p class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Invalid</p>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" type="password" th:field="*{password}" th:errorclass="input-error"/>
+                <p class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Invalid</p>
+            </div>
+
+            <div class="field">
+                <label for="organizationId">Organization ID</label>
+                <input id="organizationId" type="text" th:field="*{organizationId}" th:errorclass="input-error" placeholder="00000000-0000-0000-0000-000000000000"/>
+                <p class="hint">Ask an administrator, or <a th:href="@{/organizations/bootstrap}">create a new organization</a> first.</p>
+                <p class="field-error" th:if="${#fields.hasErrors('organizationId')}" th:errors="*{organizationId}">Invalid</p>
+            </div>
+
+            <div class="actions">
+                <button type="submit">Create account</button>
+                <a class="button secondary" th:href="@{/login}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>
