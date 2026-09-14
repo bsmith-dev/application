@@ -3,64 +3,94 @@ set shell := ["bash", "-cu"]
 set dotenv-load := true
 dotenv-path := ".env"
 
+compose := "docker compose"
+mvn := "../mvnw -f ../pom.xml -pl database"
+mvn_quiet := "MAVEN_OPTS='--sun-misc-unsafe-memory-access=allow' ../mvnw -q -f ../pom.xml -pl database"
+db_service := "database"
+db_name := "sandboxdb"
+
 # Build the database module through the root Maven reactor.
 build:
-    ../mvnw -f ../pom.xml -pl database -am clean verify
+    {{mvn}} -am clean verify
 
 # Test the database module through the root Maven reactor.
 test:
-    ../mvnw -f ../pom.xml -pl database -am test
+    {{mvn}} -am test
 
 # Remove database module build output.
 clean:
-    ../mvnw -f ../pom.xml -pl database clean
+    {{mvn}} clean
 
+# List all available recipes.
 default:
     @just --list
 
 # Stop the container and delete the data volume (full reset)
 destroy:
-    docker compose down -v
+    {{compose}} down -v --remove-orphans
 
 # Stop the container (data volume is preserved)
 down:
-    docker compose down
+    {{compose}} down --remove-orphans
 
 # Follow database container logs
 logs:
-    docker compose logs -f database
+    {{compose}} logs -f {{db_service}}
 
 # Run Flyway migrations manually using .env database settings
 migrate:
-    ../mvnw -f ../pom.xml -pl database flyway:migrate
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    {{compose}} ps --services --status running | grep -qx "{{db_service}}" || {
+        echo "Database service '{{db_service}}' is not running. Start it with 'just start' or 'just up' first." >&2
+        exit 1
+    }
+
+    MAVEN_OPTS='--sun-misc-unsafe-memory-access=allow' {{mvn}} flyway:migrate
 
 # Recreate the local database from an empty volume and load sample data
-rebuild: destroy up wait migrate seed
+rebuild: destroy start seed
 
 # Load the manual sample dataset into the local database
 
-# Requires: database is up and Flyway migrations have already run
+# Requires: database is up; this recipe applies migrations before loading sample data
 seed:
-    docker compose exec -T database mariadb -u root -p"${DB_PASSWORD}" sandboxdb < scripts/seed-sample-data.sql
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    {{compose}} ps --services --status running | grep -qx "{{db_service}}" || {
+        echo "Database service '{{db_service}}' is not running. Start it with 'just start' or 'just up' first." >&2
+        exit 1
+    }
+
+    {{mvn_quiet}} flyway:migrate
+    {{compose}} exec -T {{db_service}} mariadb -u root -p"${DB_PASSWORD}" {{db_name}} < scripts/seed-sample-data.sql
+    echo "Seeded sample data into {{db_name}}."
 
 # Open an interactive MariaDB shell against sandboxdb
 shell:
-    docker compose exec database mariadb -u root -p"${DB_PASSWORD}" sandboxdb
+    {{compose}} exec {{db_service}} mariadb -u root -p"${DB_PASSWORD}" {{db_name}}
 
 # Start the database container and wait until it is ready to accept connections
 start: up wait
 
 # Start the MariaDB container in the background
 up:
-    docker compose up -d database
+    {{compose}} up -d {{db_service}}
 
 # Wait until the database is ready to accept connections (polls up to 30 s)
 wait:
     #!/usr/bin/env bash
     set -euo pipefail
 
+    {{compose}} ps --services --status running | grep -qx "{{db_service}}" || {
+        echo "Database service '{{db_service}}' is not running. Start it with 'just up' first." >&2
+        exit 1
+    }
+
     echo "Waiting for database..."
-    until docker compose exec database mariadb-admin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
+    until {{compose}} exec -T {{db_service}} mariadb-admin ping -u root -p"${DB_PASSWORD}" --silent 2>/dev/null; do
         if [ "${SECONDS}" -ge 30 ]; then
             echo "Database did not become ready in 30 s"
             exit 1

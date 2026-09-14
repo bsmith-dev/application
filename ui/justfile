@@ -1,16 +1,18 @@
 set shell := ["bash", "-cu"]
 
+mvn := "../mvnw -f ../pom.xml -pl ui"
+
 # Build the UI module and all required upstream modules.
 build:
-    ../mvnw -f ../pom.xml -pl ui -am clean verify
+    {{mvn}} -am clean verify
 
 # Test the UI module and all required upstream modules.
 test:
-    ../mvnw -f ../pom.xml -pl ui -am test
+    {{mvn}} -am test
 
 # Remove UI module ui-build output.
 clean:
-    ../mvnw -f ../pom.xml -pl ui clean
+    {{mvn}} clean
 
 default:
     @just --list

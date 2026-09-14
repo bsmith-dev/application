@@ -2,6 +2,9 @@ INSERT INTO organizations (id, name) VALUES
     ('11111111-1111-1111-1111-111111111111', 'Acme Labs')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- Dev login credentials:
+--   admin@example.com / password123
+--   alice@example.com / password123
 INSERT INTO members (id, organization_id, username, password_hash, email) VALUES
     ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'admin', '$2a$10$devsamplepasswordhash', 'admin@example.com'),
     ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'alice', '$2a$10$devsamplepasswordhash', 'alice@example.com')

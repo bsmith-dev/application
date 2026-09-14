@@ -1,64 +1,142 @@
 set shell := ["bash", "-cu"]
 set dotenv-load := true
 
+mvn := "../mvnw -f ../pom.xml -pl api"
+mvn_local := "./mvnw -f pom.xml"
+mvn_quiet := "MAVEN_OPTS='--sun-misc-unsafe-memory-access=allow' ../mvnw -q -f ../pom.xml -pl api"
+app_port := "8080"
+app_url := "http://localhost:8080"
+app_pid_file := "target/app.pid"
+app_log_file := "target/app.log"
+java_version := "25"
+auth_probe_path := "/api/auth/login"
+
 # Build the API module and its database dependency.
 build:
-    ../mvnw -f ../pom.xml -pl api -am clean verify
+    {{mvn}} -am clean verify
 
 # Unit test the API module and its database dependency.
 test:
-    ../mvnw -f ../pom.xml -pl api -am test
+    {{mvn}} -am test
+
+# Run the full unit and MockMvc test suite.
+test-unit:
+    {{mvn_local}} test
 
 # Remove API module build output.
 clean:
-    ../mvnw -f ../pom.xml -pl api clean
+    {{mvn}} clean
 
+# List all available recipes.
 default:
     @just --list
 
 # Start the application (env vars loaded from .env; database must already be up)
 run:
-    ./mvnw spring-boot:run -f pom.xml
+    {{mvn_local}} spring-boot:run
+
+# Build the packaged application JAR and print its path
+jar-path:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    VERSION=$({{mvn_quiet}} help:evaluate -Dexpression=project.version -DforceStdout)
+    echo "target/api-${VERSION}.jar"
 
 # Kill the application if it is running on :8080 (no-op otherwise)
 stop:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    PIDS=$(lsof -ti tcp:8080 2>/dev/null || true)
-    if [ -n "${PIDS}" ]; then
-        kill ${PIDS}
-        echo "Stopped app on :8080."
-    else
-        echo "No app running on :8080."
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if kill -0 "${PID}" 2>/dev/null; then
+            kill "${PID}"
+            rm -f {{app_pid_file}}
+            echo "Stopped app (pid ${PID})."
+            exit 0
+        fi
+        rm -f {{app_pid_file}}
     fi
-    rm -f target/app.pid
+
+    PID=$(lsof -ti tcp:{{app_port}} 2>/dev/null | head -n 1 || true)
+    if [ -n "${PID}" ]; then
+        kill "${PID}"
+        echo "Stopped app on :{{app_port}} (pid ${PID})."
+    else
+        echo "No app running on :{{app_port}}."
+    fi
+    rm -f {{app_pid_file}}
 
 # Start the packaged application in the background
 up:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    JAVA_HOME=$(/usr/libexec/java_home -v 25)
-    export PATH="$JAVA_HOME/bin:$PATH"
-    VERSION=$(../mvnw -f ../pom.xml -pl api -q help:evaluate -Dexpression=project.version -DforceStdout)
-    $JAVA_HOME/bin/java -jar "target/api-${VERSION}.jar" > target/app.log 2>&1 &
-    echo "$!" > target/app.pid
-    echo "Started app (pid $(cat target/app.pid)). Logs: target/app.log"
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if kill -0 "${PID}" 2>/dev/null; then
+            echo "App is already running (pid ${PID}). Stop it first with 'just stop'." >&2
+            exit 1
+        fi
+        rm -f {{app_pid_file}}
+    fi
 
-# Run all tests and enforce the 50% line/branch JaCoCo coverage gate
+    PID=$(lsof -ti tcp:{{app_port}} 2>/dev/null | head -n 1 || true)
+    if [ -n "${PID}" ]; then
+        echo "Port :{{app_port}} is already in use by pid ${PID}. Stop it first with 'just stop'." >&2
+        exit 1
+    fi
+
+    JAVA_HOME=$(/usr/libexec/java_home -v {{java_version}})
+    export PATH="$JAVA_HOME/bin:$PATH"
+    JAR=$(just --justfile justfile --quiet jar-path)
+    if [ ! -f "${JAR}" ]; then
+        echo "Expected packaged JAR '${JAR}' not found. Run 'just package' first." >&2
+        exit 1
+    fi
+
+    $JAVA_HOME/bin/java -jar "${JAR}" > {{app_log_file}} 2>&1 &
+    echo "$!" > {{app_pid_file}}
+    echo "Started app (pid $(cat {{app_pid_file}})). Logs: {{app_log_file}}"
+
+# Run all tests and enforce the JaCoCo line/branch coverage gate
 verify:
-    ./mvnw clean verify
+    {{mvn_local}} clean verify
 
 # Wait until the application is accepting HTTP connections on :8080 (polls up to 60 s)
 wait:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    echo "Waiting for app on :8080..."
+    if [ -f {{app_pid_file}} ]; then
+        PID=$(cat {{app_pid_file}})
+        if ! kill -0 "${PID}" 2>/dev/null; then
+            echo "App process ${PID} is not running. Check {{app_log_file}} or start the app again." >&2
+            rm -f {{app_pid_file}}
+            exit 1
+        fi
+    elif ! lsof -ti tcp:{{app_port}} >/dev/null 2>&1; then
+        echo "No app appears to be running on :{{app_port}}. Start it first with 'just run' or 'just up'." >&2
+        exit 1
+    else
+        echo "App is listening on :{{app_port}}, but it was not started by 'just up'. Check that process before waiting." >&2
+        exit 1
+    fi
+
+    echo "Waiting for app on :{{app_port}}..."
     for i in $(seq 1 60); do
+        if [ -f {{app_pid_file}} ]; then
+            PID=$(cat {{app_pid_file}})
+            if ! kill -0 "${PID}" 2>/dev/null; then
+                echo "App process ${PID} exited before becoming ready. Check {{app_log_file}}." >&2
+                rm -f {{app_pid_file}}
+                exit 1
+            fi
+        fi
+
         CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST http://localhost:8080/api/auth/login \
+            -X POST {{app_url}}{{auth_probe_path}} \
             -H "Content-Type: application/json" \
             -d '{"username":"x","password":"x"}' 2>/dev/null || true)
         if [ -n "${CODE}" ] && [ "${CODE}" != "000" ]; then
@@ -76,11 +154,24 @@ coverage:
 
 # Build the executable fat JAR, skipping tests
 package:
-    ./mvnw package -DskipTests -q
+    {{mvn_local}} package -DskipTests -q
+
+# Run a single test class by simple name, e.g. `just test-class MemberServiceTest`
+test-class name:
+    {{mvn_local}} -Dtest='{{name}}' test
 
 # Run all HTTP request tests in src/test/resources/http using the dev env file
-integration:
+test-http:
     #!/usr/bin/env bash
     set -euo pipefail
+
+    CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+        -X POST {{app_url}}{{auth_probe_path}} \
+        -H "Content-Type: application/json" \
+        -d '{"username":"x","password":"x"}' 2>/dev/null || true)
+    if [ -z "${CODE}" ] || [ "${CODE}" = "000" ]; then
+        echo "App is not reachable at {{app_url}}. Start it and wait for readiness first." >&2
+        exit 1
+    fi
 
     npx --yes httpyac send "src/test/resources/http/*.http" --env dev --all
