@@ -1,12 +1,12 @@
-package app.prompts.api;
+package app.prompts.ui;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PromptDatabaseAPI {
+public class ApplicationUI {
 
     public static void main(String[] args) {
-        SpringApplication.run(PromptDatabaseAPI.class, args);
+        SpringApplication.run(ApplicationUI.class, args);
     }
 }
