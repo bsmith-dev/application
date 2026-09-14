@@ -18,7 +18,6 @@
 ### [1/2] Login as primary member (brian)
 # Expected: 200 OK
 # Response: { token }
-# → Copy token into http-client.env.json → "authToken"
 
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -28,17 +27,52 @@ Content-Type: application/json
   "password": "S3cure!pw"
 }
 
+> {%
+    client.test("Primary login returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Primary login returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Primary login returns a token", function () {
+        client.assert(typeof response.body.token === "string" && response.body.token.length > 0, "token is missing");
+    });
+
+    if (response.status === 200 && response.body.token) {
+        client.global.set("authToken", response.body.token);
+    }
+%}
+
 ###
 
-### [2/2] Login as secondary member (ben)
+### [2/2] Login as secondary member (bob)
 # Expected: 200 OK
 # Response: { token }
-# → Copy token into http-client.env.json → "secondAuthToken"
 
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "username": "ben",
+  "username": "bob",
   "password": "S3cure!pw"
 }
+
+> {%
+    client.test("Secondary login returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Secondary login returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Secondary login returns a token", function () {
+        client.assert(typeof response.body.token === "string" && response.body.token.length > 0, "token is missing");
+    });
+
+    if (response.status === 200 && response.body.token) {
+        client.global.set("secondAuthToken", response.body.token);
+    }
+%}

@@ -22,6 +22,12 @@
 
 GET {{baseUrl}}/api/groups
 
+> {%
+    client.test("Missing Authorization on groups returns 401", function () {
+        client.assert(response.status === 401, `Expected 401 Unauthorized but received ${response.status}`);
+    });
+%}
+
 ###
 
 ### [401-2] Malformed / non-JWT Bearer token
@@ -30,6 +36,12 @@ GET {{baseUrl}}/api/groups
 GET {{baseUrl}}/api/groups
 Authorization: Bearer this.is.not.a.valid.jwt
 
+> {%
+    client.test("Malformed Bearer token returns 401", function () {
+        client.assert(response.status === 401, `Expected 401 Unauthorized but received ${response.status}`);
+    });
+%}
+
 ###
 
 ### [401-3] Missing auth on member profile endpoint
@@ -37,12 +49,24 @@ Authorization: Bearer this.is.not.a.valid.jwt
 
 GET {{baseUrl}}/api/members/me
 
+> {%
+    client.test("Missing Authorization on profile returns 401", function () {
+        client.assert(response.status === 401, `Expected 401 Unauthorized but received ${response.status}`);
+    });
+%}
+
 ###
 
 ### [401-4] Missing auth on prompts endpoint
 # Expected: 401 Unauthorized
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+
+> {%
+    client.test("Missing Authorization on prompts returns 401", function () {
+        client.assert(response.status === 401, `Expected 401 Unauthorized but received ${response.status}`);
+    });
+%}
 
 ###
 
@@ -59,6 +83,19 @@ Content-Type: application/json
   "password": "short"
 }
 
+> {%
+    client.test("Short login password returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Short login password returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 400, `Expected problem status 400 but received ${response.body.status}`);
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("password"), "password validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-2] Login — missing username field
@@ -70,6 +107,18 @@ Content-Type: application/json
 {
   "password": "S3cure!pw"
 }
+
+> {%
+    client.test("Missing login username returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Missing login username returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("username"), "username validation error is missing");
+    });
+%}
 
 ###
 
@@ -83,8 +132,20 @@ Content-Type: application/json
   "username": "noemail",
   "password": "S3cure!pw",
   "email": "",
-  "organizationId": "{{organizationId}}"
+  "organizationId": "{{$global.organizationId || organizationId}}"
 }
+
+> {%
+    client.test("Blank registration email returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Blank registration email returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("email"), "email validation error is missing");
+    });
+%}
 
 ###
 
@@ -98,8 +159,20 @@ Content-Type: application/json
   "username": "bademail",
   "password": "S3cure!pw",
   "email": "not-an-email",
-  "organizationId": "{{organizationId}}"
+  "organizationId": "{{$global.organizationId || organizationId}}"
 }
+
+> {%
+    client.test("Invalid registration email returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Invalid registration email returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("email"), "email validation error is missing");
+    });
+%}
 
 ###
 
@@ -115,6 +188,18 @@ Content-Type: application/json
   "email": "noorgs@example.com"
 }
 
+> {%
+    client.test("Missing registration organizationId returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Missing registration organizationId returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("organizationId"), "organizationId validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-6] Create organization — blank name
@@ -127,26 +212,50 @@ Content-Type: application/json
   "name": ""
 }
 
+> {%
+    client.test("Blank organization name returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Blank organization name returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("name"), "name validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-7] Create group — blank name
 # Expected: 400 Bad Request
 
 POST {{baseUrl}}/api/groups
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "name": ""
 }
 
+> {%
+    client.test("Blank group name returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Blank group name returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("name"), "name validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-8] Create prompt — blank title
 # Expected: 400 Bad Request
 
-POST {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
@@ -154,31 +263,67 @@ Content-Type: application/json
   "content": "Some content here"
 }
 
+> {%
+    client.test("Blank prompt title returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Blank prompt title returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("title"), "title validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-9] Create prompt — missing content field
 # Expected: 400 Bad Request
 
-POST {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "title": "No content prompt"
 }
 
+> {%
+    client.test("Missing prompt content returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Missing prompt content returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("content"), "content validation error is missing");
+    });
+%}
+
 ###
 
 ### [400-10] Add group member — null role (role is @NotNull)
 # Expected: 400 Bad Request
 
-POST {{baseUrl}}/api/groups/{{groupId}}/members
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
-  "memberId": "{{secondMemberId}}"
+  "memberId": "{{$global.secondMemberId || secondMemberId}}"
 }
+
+> {%
+    client.test("Missing group member role returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Missing group member role returns validation problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.title === "Validation Failed", `Expected title 'Validation Failed' but received '${response.body.title}'`);
+        client.assert(response.body.errors.hasOwnProperty("role"), "role validation error is missing");
+    });
+%}
 
 ###
 
@@ -188,15 +333,39 @@ Content-Type: application/json
 # Expected: 400 Bad Request (MethodArgumentTypeMismatchException)
 
 GET {{baseUrl}}/api/groups/not-a-uuid
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Invalid groupId format returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Invalid groupId format returns invalid parameter problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 400, `Expected problem status 400 but received ${response.body.status}`);
+        client.assert(response.body.title === "Invalid Parameter", `Expected title 'Invalid Parameter' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
 ### [400-12] Get prompt — promptId is not a valid UUID
 # Expected: 400 Bad Request
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts/not-a-uuid
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/not-a-uuid
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Invalid promptId format returns 400", function () {
+        client.assert(response.status === 400, `Expected 400 Bad Request but received ${response.status}`);
+    });
+
+    client.test("Invalid promptId format returns invalid parameter problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 400, `Expected problem status 400 but received ${response.body.status}`);
+        client.assert(response.body.title === "Invalid Parameter", `Expected title 'Invalid Parameter' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
@@ -206,7 +375,19 @@ Authorization: Bearer {{authToken}}
 # Expected: 404 Not Found — Problem Details body.
 
 GET {{baseUrl}}/api/groups/00000000-0000-0000-0000-000000000000
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Missing group returns 404", function () {
+        client.assert(response.status === 404, `Expected 404 Not Found but received ${response.status}`);
+    });
+
+    client.test("Missing group returns not found problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 404, `Expected problem status 404 but received ${response.body.status}`);
+        client.assert(response.body.title === "Group Not Found", `Expected title 'Group Not Found' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
@@ -214,23 +395,47 @@ Authorization: Bearer {{authToken}}
 # Expected: 404 Not Found
 
 GET {{baseUrl}}/api/groups/00000000-0000-0000-0000-000000000000/members
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Missing group members returns 404", function () {
+        client.assert(response.status === 404, `Expected 404 Not Found but received ${response.status}`);
+    });
+
+    client.test("Missing group members returns not found problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 404, `Expected problem status 404 but received ${response.body.status}`);
+        client.assert(response.body.title === "Group Not Found", `Expected title 'Group Not Found' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
 ### [404-3] Get prompt — valid UUID but prompt does not exist
 # Expected: 404 Not Found
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Missing prompt returns 404", function () {
+        client.assert(response.status === 404, `Expected 404 Not Found but received ${response.status}`);
+    });
+
+    client.test("Missing prompt returns not found problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 404, `Expected problem status 404 but received ${response.body.status}`);
+        client.assert(response.body.title === "Prompt Not Found", `Expected title 'Prompt Not Found' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
 ### [404-4] Update prompt — prompt does not exist
 # Expected: 404 Not Found
 
-PUT {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
-Authorization: Bearer {{authToken}}
+PUT {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
@@ -238,13 +443,37 @@ Content-Type: application/json
   "content": "This prompt does not exist."
 }
 
+> {%
+    client.test("Update missing prompt returns 404", function () {
+        client.assert(response.status === 404, `Expected 404 Not Found but received ${response.status}`);
+    });
+
+    client.test("Update missing prompt returns not found problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 404, `Expected problem status 404 but received ${response.body.status}`);
+        client.assert(response.body.title === "Prompt Not Found", `Expected title 'Prompt Not Found' but received '${response.body.title}'`);
+    });
+%}
+
 ###
 
 ### [404-5] Delete prompt — prompt does not exist
 # Expected: 404 Not Found
 
-DELETE {{baseUrl}}/api/groups/{{groupId}}/prompts/00000000-0000-0000-0000-000000000000
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Delete missing prompt returns 404", function () {
+        client.assert(response.status === 404, `Expected 404 Not Found but received ${response.status}`);
+    });
+
+    client.test("Delete missing prompt returns not found problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 404, `Expected problem status 404 but received ${response.body.status}`);
+        client.assert(response.body.title === "Prompt Not Found", `Expected title 'Prompt Not Found' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
@@ -253,5 +482,17 @@ Authorization: Bearer {{authToken}}
 ### [409-1] Delete non-empty organization
 # Expected: 409 Conflict because the org still has members and/or groups.
 
-DELETE {{baseUrl}}/api/organizations/{{organizationId}}
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/organizations/{{$global.organizationId || organizationId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Delete non-empty organization returns 409", function () {
+        client.assert(response.status === 409, `Expected 409 Conflict but received ${response.status}`);
+    });
+
+    client.test("Delete non-empty organization returns conflict problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 409, `Expected problem status 409 but received ${response.body.status}`);
+        client.assert(response.body.title === "Conflict", `Expected title 'Conflict' but received '${response.body.title}'`);
+    });
+%}

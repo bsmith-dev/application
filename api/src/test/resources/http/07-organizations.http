@@ -18,14 +18,27 @@
 # Expected: 200 OK — array containing at least the bootstrap organization.
 
 GET {{baseUrl}}/api/organizations
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("List organizations returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("List organizations contains bootstrap organization", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const organization = response.body.find(item => item.organizationId === client.global.get("organizationId"));
+        client.assert(organization !== undefined, "Bootstrap organization is missing from organization list");
+        client.assert(organization.name === "Smoke Test Org", `Expected bootstrap organization name 'Smoke Test Org' but received '${organization && organization.name}'`);
+    });
+%}
 
 ###
 
 ### [2/5] Create an empty organization
 # Expected: 201 Created
 # Response: { organizationId, name }
-# → Copy organizationId into http-client.env.json → "emptyOrganizationId"
 
 POST {{baseUrl}}/api/organizations
 Content-Type: application/json
@@ -34,19 +47,47 @@ Content-Type: application/json
   "name": "Empty Organization For CRUD"
 }
 
+> {%
+    client.test("Create empty organization returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Create empty organization returns expected body", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(typeof response.body.organizationId === "string" && response.body.organizationId.length > 0, "empty organizationId is missing");
+        client.assert(response.body.name === "Empty Organization For CRUD", `Expected empty organization name but received '${response.body.name}'`);
+    });
+
+    if (response.status === 201 && response.body.organizationId) {
+        client.global.set("emptyOrganizationId", response.body.organizationId);
+    }
+%}
+
 ###
 
 ### [3/5] Rename empty organization as ADMIN
 # Expected: 200 OK
 # Requires: emptyOrganizationId from step [2/5]
 
-PUT {{baseUrl}}/api/organizations/{{emptyOrganizationId}}
-Authorization: Bearer {{authToken}}
+PUT {{baseUrl}}/api/organizations/{{$global.emptyOrganizationId || emptyOrganizationId}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "name": "Empty Organization For CRUD (renamed)"
 }
+
+> {%
+    client.test("Rename empty organization returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Rename empty organization returns expected body", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.organizationId === client.global.get("emptyOrganizationId"), "organizationId does not match emptyOrganizationId");
+        client.assert(response.body.name === "Empty Organization For CRUD (renamed)", `Expected renamed organization but received '${response.body.name}'`);
+    });
+%}
 
 ###
 
@@ -54,8 +95,14 @@ Content-Type: application/json
 # Expected: 204 No Content
 # Requires: emptyOrganizationId from step [2/5]
 
-DELETE {{baseUrl}}/api/organizations/{{emptyOrganizationId}}
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/organizations/{{$global.emptyOrganizationId || emptyOrganizationId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Delete empty organization returns 204", function () {
+        client.assert(response.status === 204, `Expected 204 No Content but received ${response.status}`);
+    });
+%}
 
 ###
 
@@ -63,5 +110,17 @@ Authorization: Bearer {{authToken}}
 # Expected: 409 Conflict because the bootstrap organization has members/groups.
 # Requires: organizationId from 00-setup.http.
 
-DELETE {{baseUrl}}/api/organizations/{{organizationId}}
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/organizations/{{$global.organizationId || organizationId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Delete non-empty organization returns 409", function () {
+        client.assert(response.status === 409, `Expected 409 Conflict but received ${response.status}`);
+    });
+
+    client.test("Delete non-empty organization returns conflict problem", function () {
+        client.assert(response.contentType.mimeType === "application/problem+json", "Response content-type is not application/problem+json");
+        client.assert(response.body.status === 409, `Expected problem status 409 but received ${response.body.status}`);
+        client.assert(response.body.title === "Conflict", `Expected title 'Conflict' but received '${response.body.title}'`);
+    });
+%}

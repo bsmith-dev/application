@@ -7,6 +7,9 @@ import app.prompts.application.service.GroupNotFoundException;
 import app.prompts.application.service.MemberNotFoundException;
 import app.prompts.application.service.OrganizationNotFoundException;
 import app.prompts.application.service.PromptNotFoundException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,6 +21,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
  * Maps application-layer exceptions to RFC 9457 Problem Detail responses.
  * Spring MVC Problem Details are enabled via {@code spring.mvc.problemdetails.enabled=true}.
  */
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class PromptsExceptionHandler {
 
@@ -58,6 +62,14 @@ public class PromptsExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
         pd.setTitle("Access Denied");
         pd.setDetail(ex.getMessage());
+        return pd;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Conflict");
+        pd.setDetail("A resource with the same unique identifier already exists.");
         return pd;
     }
 

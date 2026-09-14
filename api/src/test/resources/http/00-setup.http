@@ -18,7 +18,6 @@
 ### [1/3] Create organization
 # Expected: 201 Created
 # Response: { organizationId, name }
-# → Copy organizationId into http-client.env.json → "organizationId"
 
 POST {{baseUrl}}/api/organizations
 Content-Type: application/json
@@ -27,12 +26,30 @@ Content-Type: application/json
   "name": "Smoke Test Org"
 }
 
+> {%
+    client.test("Create organization returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Create organization returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Create organization returns expected body", function () {
+        client.assert(response.body.name === "Smoke Test Org", `Expected organization name 'Smoke Test Org' but received '${response.body.name}'`);
+        client.assert(typeof response.body.organizationId === "string" && response.body.organizationId.length > 0, "organizationId is missing");
+    });
+
+    if (response.status === 201 && response.body.organizationId) {
+        client.global.set("organizationId", response.body.organizationId);
+    }
+%}
+
 ###
 
 ### [2/3] Register primary member (brian)
 # Expected: 201 Created
 # Response: { memberId, organizationId, username, email, role }
-# → Copy memberId into http-client.env.json → "primaryMemberId"
 #
 # Requires: organizationId set in env from step [1/3]
 
@@ -43,15 +60,35 @@ Content-Type: application/json
   "username": "brian",
   "password": "S3cure!pw",
   "email": "brian@example.com",
-  "organizationId": "{{organizationId}}"
+  "organizationId": "{{$global.organizationId || organizationId}}"
 }
+
+> {%
+    client.test("Register primary member returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Register primary member returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Register primary member returns expected body", function () {
+        client.assert(response.body.username === "brian", `Expected username 'brian' but received '${response.body.username}'`);
+        client.assert(response.body.email === "brian@example.com", `Expected email 'brian@example.com' but received '${response.body.email}'`);
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "Primary member organizationId does not match created organization");
+        client.assert(typeof response.body.memberId === "string" && response.body.memberId.length > 0, "memberId is missing");
+    });
+
+    if (response.status === 201 && response.body.memberId) {
+        client.global.set("primaryMemberId", response.body.memberId);
+    }
+%}
 
 ###
 
 ### [3/3] Register secondary member (ben)
 # Expected: 201 Created
 # Response: { memberId, organizationId, username, email, role }
-# → Copy memberId into http-client.env.json → "secondMemberId"
 #
 # Used in 04-group-members.http to test the Members page pattern:
 # register a member, select a group, then assign the selected role.
@@ -60,8 +97,29 @@ POST {{baseUrl}}/api/members
 Content-Type: application/json
 
 {
-  "username": "ben",
+  "username": "bob",
   "password": "S3cure!pw",
-  "email": "ben@example.com",
-  "organizationId": "{{organizationId}}"
+  "email": "bob@example.com",
+  "organizationId": "{{$global.organizationId || organizationId}}"
 }
+
+> {%
+    client.test("Register secondary member returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Register secondary member returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Register secondary member returns expected body", function () {
+        client.assert(response.body.username === "bob", `Expected username 'bob' but received '${response.body.username}'`);
+        client.assert(response.body.email === "bob@example.com", `Expected email 'bob@example.com' but received '${response.body.email}'`);
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "Secondary member organizationId does not match created organization");
+        client.assert(typeof response.body.memberId === "string" && response.body.memberId.length > 0, "memberId is missing");
+    });
+
+    if (response.status === 201 && response.body.memberId) {
+        client.global.set("secondMemberId", response.body.memberId);
+    }
+%}

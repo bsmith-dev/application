@@ -17,10 +17,9 @@
 ### [1/8] Create first prompt
 # Expected: 201 Created
 # Response: { id, groupId, createdBy, title, content, createdAt, updatedAt }
-# → Copy id into http-client.env.json → "promptId"
 
-POST {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
@@ -28,13 +27,48 @@ Content-Type: application/json
   "content": "Write a friendly greeting that introduces the concept of prompt engineering."
 }
 
+> {%
+    client.test("Create first prompt returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Create first prompt returns expected body", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(typeof response.body.id === "string" && response.body.id.length > 0, "prompt id is missing");
+        client.assert(response.body.groupId === client.global.get("groupId"), "Prompt groupId does not match groupId");
+        client.assert(response.body.createdBy === client.global.get("primaryMemberId"), "Prompt createdBy does not match primaryMemberId");
+        client.assert(response.body.title === "Hello World Prompt", `Expected title 'Hello World Prompt' but received '${response.body.title}'`);
+        client.assert(response.body.content === "Write a friendly greeting that introduces the concept of prompt engineering.", "Prompt content does not match request");
+        client.assert(response.body.createdAt !== undefined, "createdAt is missing");
+        client.assert(response.body.updatedAt !== undefined, "updatedAt is missing");
+    });
+
+    if (response.status === 201 && response.body.id) {
+        client.global.set("promptId", response.body.id);
+    }
+%}
+
 ###
 
 ### [2/8] List prompts (should contain the first prompt)
 # Expected: 200 OK — array with one entry.
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("List prompts after first create returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("List prompts contains first prompt", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const prompt = response.body.find(item => item.id === client.global.get("promptId"));
+        client.assert(prompt !== undefined, "First prompt is missing from prompt list");
+        client.assert(prompt.title === "Hello World Prompt", `Expected title 'Hello World Prompt' but received '${prompt && prompt.title}'`);
+    });
+%}
 
 ###
 
@@ -43,8 +77,21 @@ Authorization: Bearer {{authToken}}
 # Response: full prompt object.
 # Requires: promptId set in env from step [1/8]
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/{{$global.promptId || promptId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Get first prompt returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Get first prompt returns expected prompt", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.id === client.global.get("promptId"), "Prompt id does not match promptId");
+        client.assert(response.body.groupId === client.global.get("groupId"), "Prompt groupId does not match groupId");
+        client.assert(response.body.title === "Hello World Prompt", `Expected title 'Hello World Prompt' but received '${response.body.title}'`);
+    });
+%}
 
 ###
 
@@ -52,8 +99,8 @@ Authorization: Bearer {{authToken}}
 # Expected: 200 OK
 # Response: prompt object with updated title/content and refreshed updatedAt.
 
-PUT {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
-Authorization: Bearer {{authToken}}
+PUT {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/{{$global.promptId || promptId}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
@@ -61,21 +108,47 @@ Content-Type: application/json
   "content": "Write a concise, friendly greeting that introduces prompt engineering to a beginner."
 }
 
+> {%
+    client.test("Update first prompt returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Update first prompt returns revised prompt", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.id === client.global.get("promptId"), "Prompt id does not match promptId");
+        client.assert(response.body.title === "Hello World Prompt (revised)", `Expected revised title but received '${response.body.title}'`);
+        client.assert(response.body.content === "Write a concise, friendly greeting that introduces prompt engineering to a beginner.", "Prompt content does not match revised request");
+    });
+%}
+
 ###
 
 ### [5/8] Verify update — get the prompt again
 # Expected: 200 OK — title and content reflect the values from [4/8].
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/{{$global.promptId || promptId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Verify prompt update returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Verify prompt update returns revised values", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.id === client.global.get("promptId"), "Prompt id does not match promptId");
+        client.assert(response.body.title === "Hello World Prompt (revised)", `Expected revised title but received '${response.body.title}'`);
+        client.assert(response.body.content === "Write a concise, friendly greeting that introduces prompt engineering to a beginner.", "Prompt content does not match revised request");
+    });
+%}
 
 ###
 
 ### [6/8] Create second prompt (so list is non-trivial)
 # Expected: 201 Created
 
-POST {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
@@ -83,13 +156,41 @@ Content-Type: application/json
   "content": "Review the following code snippet for correctness, readability, and potential bugs. Provide actionable feedback."
 }
 
+> {%
+    client.test("Create second prompt returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Create second prompt returns expected body", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(typeof response.body.id === "string" && response.body.id.length > 0, "second prompt id is missing");
+        client.assert(response.body.groupId === client.global.get("groupId"), "Second prompt groupId does not match groupId");
+        client.assert(response.body.title === "Code Review Prompt", `Expected title 'Code Review Prompt' but received '${response.body.title}'`);
+    });
+%}
+
 ###
 
 ### [7/8] List prompts (should now contain both prompts)
 # Expected: 200 OK — array with two entries.
 
-GET {{baseUrl}}/api/groups/{{groupId}}/prompts
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("List prompts after second create returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("List prompts contains both prompts", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const first = response.body.find(item => item.id === client.global.get("promptId"));
+        const second = response.body.find(item => item.title === "Code Review Prompt");
+        client.assert(first !== undefined, "First prompt is missing from prompt list");
+        client.assert(second !== undefined, "Second prompt is missing from prompt list");
+    });
+%}
 
 ###
 
@@ -97,5 +198,11 @@ Authorization: Bearer {{authToken}}
 # Expected: 204 No Content
 # After this, a subsequent list should contain only the second prompt.
 
-DELETE {{baseUrl}}/api/groups/{{groupId}}/prompts/{{promptId}}
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/prompts/{{$global.promptId || promptId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Delete first prompt returns 204", function () {
+        client.assert(response.status === 204, `Expected 204 No Content but received ${response.status}`);
+    });
+%}

@@ -6,8 +6,8 @@ ON DUPLICATE KEY UPDATE name = VALUES(name);
 --   admin@example.com / password123
 --   alice@example.com / password123
 INSERT INTO members (id, organization_id, username, password_hash, email) VALUES
-    ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'admin', '$2a$10$devsamplepasswordhash', 'admin@example.com'),
-    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'alice', '$2a$10$devsamplepasswordhash', 'alice@example.com')
+    ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'admin', '$2a$10$EIOqu6jcEu2sjdFnmGb2pOcw5kUYFz/wvnk.ahEPd5bvfzXChkks2', 'admin@example.com'),
+    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'alice', '$2a$10$EIOqu6jcEu2sjdFnmGb2pOcw5kUYFz/wvnk.ahEPd5bvfzXChkks2', 'alice@example.com')
 ON DUPLICATE KEY UPDATE
     organization_id = VALUES(organization_id),
     username = VALUES(username),

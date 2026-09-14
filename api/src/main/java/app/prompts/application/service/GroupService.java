@@ -192,12 +192,11 @@ public class GroupService implements ManageGroupUseCase {
     public List<GroupMembershipResult> listMembers(UUID rawGroupId, UUID rawRequesterId, UUID organizationId) {
         GroupId groupId = new GroupId(rawGroupId);
         MemberId requesterId = new MemberId(rawRequesterId);
+        findGroupInOrg(groupId, organizationId);
         List<GroupMembership> memberships = groupMembershipRepository.findByGroupId(groupId);
         if (!groupAccessPolicy.isMember(groupId, requesterId, memberships)) {
             throw new AccessDeniedException("Member is not in the group");
         }
-        // Confirm the group belongs to the requester's org (IDOR guard)
-        findGroupInOrg(groupId, organizationId);
         return memberships.stream().map(this::toMembershipResult).toList();
     }
 

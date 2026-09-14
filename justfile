@@ -65,6 +65,7 @@ coverage:
 
 # Run HTTP request tests against the local API.
 test-http:
+    (cd {{database_dir}} && just --justfile justfile rebuild)
     (cd {{api_dir}} && just --justfile justfile test-http)
 
 # Start the local database container and wait for readiness.

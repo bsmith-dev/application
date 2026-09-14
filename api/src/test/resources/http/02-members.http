@@ -16,23 +16,77 @@
 # Validates: JWT sub/memberId claim resolves to the correct member record.
 
 GET {{baseUrl}}/api/members/me
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Primary profile returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Primary profile returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Primary profile matches authenticated member", function () {
+        client.assert(response.body.memberId === client.global.get("primaryMemberId"), "Primary profile memberId does not match primaryMemberId");
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "Primary profile organizationId does not match organizationId");
+        client.assert(response.body.username === "brian", `Expected username 'brian' but received '${response.body.username}'`);
+        client.assert(response.body.email === "brian@example.com", `Expected email 'brian@example.com' but received '${response.body.email}'`);
+    });
+%}
 
 ###
 
 ### [2/3] Get own profile (secondary member)
 # Expected: 200 OK
-# Response: { memberId, organizationId, username, email, role } for ben.
+# Response: { memberId, organizationId, username, email, role } for bob.
 # Validates: each token resolves to its own principal independently.
 
 GET {{baseUrl}}/api/members/me
-Authorization: Bearer {{secondAuthToken}}
+Authorization: Bearer {{$global.secondAuthToken || secondAuthToken}}
+
+> {%
+    client.test("Secondary profile returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Secondary profile returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Secondary profile matches authenticated member", function () {
+        client.assert(response.body.memberId === client.global.get("secondMemberId"), "Secondary profile memberId does not match secondMemberId");
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "Secondary profile organizationId does not match organizationId");
+        client.assert(response.body.username === "bob", `Expected username 'bob' but received '${response.body.username}'`);
+        client.assert(response.body.email === "bob@example.com", `Expected email 'bob@example.com' but received '${response.body.email}'`);
+    });
+%}
 
 ###
 
 ### [3/3] List all members
-# Expected: 200 OK with an array containing at least brian and ben.
+# Expected: 200 OK with an array containing at least brian and bob.
 # Useful for looking up UUIDs when adding members to groups.
 
 GET {{baseUrl}}/api/members
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("List members returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("List members returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("List members includes primary and secondary members", function () {
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const primary = response.body.find(member => member.memberId === client.global.get("primaryMemberId"));
+        const secondary = response.body.find(member => member.memberId === client.global.get("secondMemberId"));
+        client.assert(primary !== undefined, "Primary member is missing from member list");
+        client.assert(secondary !== undefined, "Secondary member is missing from member list");
+        client.assert(primary.username === "brian", `Expected primary username 'brian' but received '${primary && primary.username}'`);
+        client.assert(secondary.username === "bob", `Expected secondary username 'bob' but received '${secondary && secondary.username}'`);
+    });
+%}

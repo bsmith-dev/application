@@ -19,24 +19,54 @@
 # Expected: 200 OK — empty array on a fresh database.
 
 GET {{baseUrl}}/api/groups
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Initial group list returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Initial group list returns JSON array", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+    });
+%}
 
 ###
 
 ### [2/5] Create a group
 # Expected: 201 Created
 # Response: { groupId, organizationId, name }
-# → Copy groupId into http-client.env.json → "groupId"
 #
 # The creator is automatically added as an ADMIN member of the group.
 
 POST {{baseUrl}}/api/groups
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "name": "Smoke Test Group"
 }
+
+> {%
+    client.test("Create group returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Create group returns JSON", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+    });
+
+    client.test("Create group returns expected body", function () {
+        client.assert(response.body.name === "Smoke Test Group", `Expected group name 'Smoke Test Group' but received '${response.body.name}'`);
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "Group organizationId does not match created organization");
+        client.assert(typeof response.body.groupId === "string" && response.body.groupId.length > 0, "groupId is missing");
+    });
+
+    if (response.status === 201 && response.body.groupId) {
+        client.global.set("groupId", response.body.groupId);
+    }
+%}
 
 ###
 
@@ -44,7 +74,21 @@ Content-Type: application/json
 # Expected: 200 OK — array with one entry whose name is "Smoke Test Group".
 
 GET {{baseUrl}}/api/groups
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Group list after create returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Group list after create includes created group", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const group = response.body.find(item => item.groupId === client.global.get("groupId"));
+        client.assert(group !== undefined, "Created group is missing from group list");
+        client.assert(group.name === "Smoke Test Group", `Expected group name 'Smoke Test Group' but received '${group && group.name}'`);
+    });
+%}
 
 ###
 
@@ -53,8 +97,21 @@ Authorization: Bearer {{authToken}}
 # Response: { groupId, organizationId, name }
 # Requires: groupId set in env from step [2/5]
 
-GET {{baseUrl}}/api/groups/{{groupId}}
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Get group returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Get group returns created group", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.groupId === client.global.get("groupId"), "groupId does not match created group");
+        client.assert(response.body.organizationId === client.global.get("organizationId"), "organizationId does not match created organization");
+        client.assert(response.body.name === "Smoke Test Group", `Expected group name 'Smoke Test Group' but received '${response.body.name}'`);
+    });
+%}
 
 ###
 
@@ -63,13 +120,25 @@ Authorization: Bearer {{authToken}}
 # Response: { groupId, organizationId, name } with updated name.
 # Requires: groupId set in env from step [2/5]
 
-PUT {{baseUrl}}/api/groups/{{groupId}}
-Authorization: Bearer {{authToken}}
+PUT {{baseUrl}}/api/groups/{{$global.groupId || groupId}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "name": "Smoke Test Group (renamed)"
 }
+
+> {%
+    client.test("Rename group returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Rename group returns updated group", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.groupId === client.global.get("groupId"), "groupId does not match created group");
+        client.assert(response.body.name === "Smoke Test Group (renamed)", `Expected renamed group but received '${response.body.name}'`);
+    });
+%}
 
 ###
 
@@ -79,9 +148,8 @@ Content-Type: application/json
 # if those have not already been run.
 # ─────────────────────────────────────────────────────────────────────────────
 
-### [TEARDOWN] Delete group
-# Expected: 204 No Content
-# Requires: groupId set in env from step [2/5]
-
-DELETE {{baseUrl}}/api/groups/{{groupId}}
-Authorization: Bearer {{authToken}}
+# Manual teardown only. Keep this commented so `httpyac --all` does not delete
+# the shared group before 04-group-members.http and 05-prompts.http run.
+#
+# DELETE {{baseUrl}}/api/groups/{{$global.groupId || groupId}}
+# Authorization: Bearer {{$global.authToken || authToken}}

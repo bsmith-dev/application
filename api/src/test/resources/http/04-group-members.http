@@ -15,77 +15,169 @@
 #
 # Prerequisites:
 #   authToken       — primary member (brian), who is already ADMIN of the group
-#   secondAuthToken — secondary member (ben), used to verify their own membership
+#   secondAuthToken — secondary member (bob), used to verify their own membership
 #   groupId         — the group created in 03-groups.http
-#   secondMemberId  — ben's memberId from 00-setup.http
+#   secondMemberId  — bob's memberId from 00-setup.http
 # ─────────────────────────────────────────────────────────────────────────────
 
 ### [1/7] List group members (only creator at this point)
 # Expected: 200 OK — array with one entry: brian as ADMIN.
 
-GET {{baseUrl}}/api/groups/{{groupId}}/members
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Initial group members returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Initial group members contains creator as ADMIN", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const creator = response.body.find(member => member.memberId === client.global.get("primaryMemberId"));
+        client.assert(creator !== undefined, "Primary member is missing from group membership list");
+        client.assert(creator.groupId === client.global.get("groupId"), "Creator membership groupId does not match groupId");
+        client.assert(creator.role === "ADMIN", `Expected creator role 'ADMIN' but received '${creator && creator.role}'`);
+    });
+%}
 
 ###
 
-### [2/7] Add secondary member (ben) as MEMBER
+### [2/7] Add secondary member (bob) as MEMBER
 # Expected: 201 Created
 # Response: { groupId, memberId, role: "MEMBER" }
 # Role choices: ADMIN | GROUP_LEAD | MEMBER
 
-POST {{baseUrl}}/api/groups/{{groupId}}/members
-Authorization: Bearer {{authToken}}
+POST {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
-  "memberId": "{{secondMemberId}}",
+  "memberId": "{{$global.secondMemberId || secondMemberId}}",
   "role": "MEMBER"
 }
 
+> {%
+    client.test("Add secondary member returns 201", function () {
+        client.assert(response.status === 201, `Expected 201 Created but received ${response.status}`);
+    });
+
+    client.test("Add secondary member returns expected membership", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.groupId === client.global.get("groupId"), "Membership groupId does not match groupId");
+        client.assert(response.body.memberId === client.global.get("secondMemberId"), "Membership memberId does not match secondMemberId");
+        client.assert(response.body.role === "MEMBER", `Expected role 'MEMBER' but received '${response.body.role}'`);
+    });
+%}
+
 ###
 
-### [3/7] List group members (should now show both brian and ben)
+### [3/7] List group members (should now show both brian and bob)
 # Expected: 200 OK — array with two entries.
 
-GET {{baseUrl}}/api/groups/{{groupId}}/members
-Authorization: Bearer {{authToken}}
+GET {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Group members after add returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Group members after add contains both members", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const primary = response.body.find(member => member.memberId === client.global.get("primaryMemberId"));
+        const secondary = response.body.find(member => member.memberId === client.global.get("secondMemberId"));
+        client.assert(primary !== undefined, "Primary member is missing from group membership list");
+        client.assert(secondary !== undefined, "Secondary member is missing from group membership list");
+        client.assert(primary.role === "ADMIN", `Expected primary role 'ADMIN' but received '${primary && primary.role}'`);
+        client.assert(secondary.role === "MEMBER", `Expected secondary role 'MEMBER' but received '${secondary && secondary.role}'`);
+    });
+%}
 
 ###
 
-### [4/7] List all members (ben should now have effective role MEMBER)
-# Expected: 200 OK — ben's MemberResponse role is "MEMBER".
+### [4/7] List all members (bob should now have effective role MEMBER)
+# Expected: 200 OK — bob's MemberResponse role is "MEMBER".
 # This is the API surface shown by the Members page table.
 
 GET {{baseUrl}}/api/members
-Authorization: Bearer {{authToken}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("List members after group add returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("List members shows secondary effective role", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const secondary = response.body.find(member => member.memberId === client.global.get("secondMemberId"));
+        client.assert(secondary !== undefined, "Secondary member is missing from member list");
+        client.assert(secondary.role === "MEMBER", `Expected secondary role 'MEMBER' but received '${secondary && secondary.role}'`);
+    });
+%}
 
 ###
 
 ### [5/7] Secondary member lists the group (validates they can see it after being added)
-# Expected: 200 OK — group appears in ben's list.
+# Expected: 200 OK — group appears in bob's list.
 
 GET {{baseUrl}}/api/groups
-Authorization: Bearer {{secondAuthToken}}
+Authorization: Bearer {{$global.secondAuthToken || secondAuthToken}}
+
+> {%
+    client.test("Secondary group list returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Secondary group list includes group", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(Array.isArray(response.body), "Response body is not an array");
+        const group = response.body.find(item => item.groupId === client.global.get("groupId"));
+        client.assert(group !== undefined, "Group is missing from secondary member group list");
+        client.assert(group.name === "Smoke Test Group (renamed)", `Expected renamed group but received '${group && group.name}'`);
+    });
+%}
 
 ###
 
-### [6/7] Change ben's role from MEMBER to GROUP_LEAD
+### [6/7] Change bob's role from MEMBER to GROUP_LEAD
 # Expected: 200 OK
 # Response: { groupId, memberId, role: "GROUP_LEAD" }
 
-PUT {{baseUrl}}/api/groups/{{groupId}}/members/{{secondMemberId}}
-Authorization: Bearer {{authToken}}
+PUT {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members/{{$global.secondMemberId || secondMemberId}}
+Authorization: Bearer {{$global.authToken || authToken}}
 Content-Type: application/json
 
 {
   "role": "GROUP_LEAD"
 }
 
+> {%
+    client.test("Change member role returns 200", function () {
+        client.assert(response.status === 200, `Expected 200 OK but received ${response.status}`);
+    });
+
+    client.test("Change member role returns updated membership", function () {
+        client.assert(response.contentType.mimeType === "application/json", "Response content-type is not application/json");
+        client.assert(response.body.groupId === client.global.get("groupId"), "Membership groupId does not match groupId");
+        client.assert(response.body.memberId === client.global.get("secondMemberId"), "Membership memberId does not match secondMemberId");
+        client.assert(response.body.role === "GROUP_LEAD", `Expected role 'GROUP_LEAD' but received '${response.body.role}'`);
+    });
+%}
+
 ###
 
-### [7/7] Remove ben from the group
+### [7/7] Remove bob from the group
 # Expected: 204 No Content
-# After this, ben should no longer appear in the members list.
+# After this, bob should no longer appear in the members list.
 
-DELETE {{baseUrl}}/api/groups/{{groupId}}/members/{{secondMemberId}}
-Authorization: Bearer {{authToken}}
+DELETE {{baseUrl}}/api/groups/{{$global.groupId || groupId}}/members/{{$global.secondMemberId || secondMemberId}}
+Authorization: Bearer {{$global.authToken || authToken}}
+
+> {%
+    client.test("Remove secondary member returns 204", function () {
+        client.assert(response.status === 204, `Expected 204 No Content but received ${response.status}`);
+    });
+%}

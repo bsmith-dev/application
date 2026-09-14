@@ -222,6 +222,8 @@ class GroupServiceTest {
         GroupId groupId = GroupId.newId();
         MemberId requesterId = MemberId.newId();
         OrganizationId orgId = OrganizationId.newId();
+        when(groupRepository.findByIdAndOrganizationId(groupId, orgId))
+                .thenReturn(Optional.of(new Group(groupId, orgId, "Support")));
 
         when(groupMembershipRepository.findByGroupId(groupId))
                 .thenReturn(List.of(new GroupMembership(groupId, MemberId.newId(), Role.MEMBER)));
