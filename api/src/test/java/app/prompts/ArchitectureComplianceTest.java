@@ -1,17 +1,22 @@
 package app.prompts;
 
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import org.junit.jupiter.api.DisplayName;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
 @AnalyzeClasses(packages = "app.prompts", importOptions = ImportOption.DoNotIncludeTests.class)
+@DisplayName("Architecture compliance rules")
 public class ArchitectureComplianceTest {
 
     @ArchTest
-    static final ArchRule domain_should_be_framework_free = noClasses()
+    @DisplayName("Domain layer remains free of framework and infrastructure dependencies")
+    static void domain_should_be_framework_free(JavaClasses classes) {
+        ArchRule rule = noClasses()
             .that().resideInAnyPackage("..domain..")
             .should().dependOnClassesThat().resideInAnyPackage(
                     "org.springframework..",
@@ -19,19 +24,31 @@ public class ArchitectureComplianceTest {
                     "jakarta.servlet..",
                     "..infrastructure.."
             );
+        rule.check(classes);
+    }
 
     @ArchTest
-    static final ArchRule application_should_not_depend_on_infrastructure = noClasses()
+    @DisplayName("Application layer does not depend on infrastructure")
+    static void application_should_not_depend_on_infrastructure(JavaClasses classes) {
+        ArchRule rule = noClasses()
             .that().resideInAnyPackage("..prompts.application..")
             .should().dependOnClassesThat().resideInAnyPackage("..prompts.infrastructure..");
+        rule.check(classes);
+    }
 
     @ArchTest
-    static final ArchRule no_field_injection = noFields()
+    @DisplayName("Spring dependencies use constructor injection instead of field injection")
+    static void no_field_injection(JavaClasses classes) {
+        ArchRule rule = noFields()
             .should().beAnnotatedWith("org.springframework.beans.factory.annotation.Autowired")
             .because("Constructor injection is required for architectural purity and testability");
+        rule.check(classes);
+    }
 
     @ArchTest
-    static final ArchRule presentation_should_call_application_services = classes()
+    @DisplayName("Presentation layer depends only on application, domain, Spring, Jakarta, and Java APIs")
+    static void presentation_should_call_application_services(JavaClasses classes) {
+        ArchRule rule = classes()
             .that().resideInAnyPackage("..prompts.presentation..")
             .should().onlyDependOnClassesThat().resideInAnyPackage(
                     "..prompts.application..",
@@ -41,9 +58,15 @@ public class ArchitectureComplianceTest {
                     "jakarta.validation..",
                     "java.."
             );
+        rule.check(classes);
+    }
 
     @ArchTest
-    static final ArchRule infrastructure_implements_application_ports = classes()
+    @DisplayName("Infrastructure layer implements application ports")
+    static void infrastructure_implements_application_ports(JavaClasses classes) {
+        ArchRule rule = classes()
             .that().resideInAnyPackage("..prompts.infrastructure..")
             .should().dependOnClassesThat().resideInAnyPackage("..prompts.application.port..");
+        rule.check(classes);
+    }
 }

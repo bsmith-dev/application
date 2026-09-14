@@ -1,6 +1,7 @@
 package app.prompts.presentation.rest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -43,6 +44,7 @@ class AuthControllerTest {
                 .build();
     }
 
+    @DisplayName("Login valid credentials returns 200 with token")
     @Test
     void login_validCredentials_returns200WithToken() throws Exception {
         when(loginUseCase.login(any())).thenReturn(new LoginResponse("jwt-abc"));
@@ -56,6 +58,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value("jwt-abc"));
     }
 
+    @DisplayName("Login blank username returns 400 with errors")
     @Test
     void login_blankUsername_returns400WithErrors() throws Exception {
         mockMvc.perform(post("/api/auth/login")
@@ -67,6 +70,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.errors.username").exists());
     }
 
+    @DisplayName("Login short password returns 400")
     @Test
     void login_shortPassword_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/login")
@@ -77,6 +81,7 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Login username too short returns 400")
     @Test
     void login_usernameTooShort_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/login")
@@ -87,6 +92,7 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Login bad credentials propagates exception")
     @Test
     void login_badCredentials_propagatesException() {
         when(loginUseCase.login(any()))

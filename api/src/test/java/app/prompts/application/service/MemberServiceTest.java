@@ -1,5 +1,6 @@
 package app.prompts.application.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,6 +34,7 @@ class MemberServiceTest {
     @Mock
     private GroupMembershipRepository groupMembershipRepository;
 
+    @DisplayName("Register member saves and returns result")
     @Test
     void registerMemberSavesAndReturnsResult() {
         UUID orgId = UUID.randomUUID();
@@ -50,6 +52,7 @@ class MemberServiceTest {
         assertNull(result.role());
     }
 
+    @DisplayName("List members returns only members in given org")
     @Test
     void listMembers_returnsOnlyMembersInGivenOrg() {
         UUID orgId = UUID.randomUUID();
@@ -79,6 +82,7 @@ class MemberServiceTest {
         results.forEach(r -> assertEquals(orgId, r.organizationId()));
     }
 
+    @DisplayName("List members returns empty list when org has no members")
     @Test
     void listMembers_returnsEmptyListWhenOrgHasNoMembers() {
         UUID orgId = UUID.randomUUID();
@@ -90,6 +94,7 @@ class MemberServiceTest {
         assertEquals(0, results.size());
     }
 
+    @DisplayName("Get member existing ID returns result")
     @Test
     void getMember_existingId_returnsResult() {
         UUID orgId = UUID.randomUUID();
@@ -108,6 +113,7 @@ class MemberServiceTest {
         assertEquals(Role.GROUP_LEAD, result.role());
     }
 
+    @DisplayName("Get member unknown ID throws member not found exception")
     @Test
     void getMember_unknownId_throwsMemberNotFoundException() {
         UUID id = UUID.randomUUID();
@@ -117,6 +123,7 @@ class MemberServiceTest {
         assertThrows(MemberNotFoundException.class, () -> memberService.getMember(id));
     }
 
+    @DisplayName("Get member with multiple memberships returns highest role")
     @Test
     void getMember_withMultipleMembershipsReturnsHighestRole() {
         UUID orgId = UUID.randomUUID();

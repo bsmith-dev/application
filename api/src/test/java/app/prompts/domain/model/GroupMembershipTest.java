@@ -1,5 +1,6 @@
 package app.prompts.domain.model;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GroupMembershipTest {
+    @DisplayName("Missing role throws an exception")
     @Test
     void missingRoleThrows() {
         GroupId groupId = GroupId.newId();
@@ -16,6 +18,7 @@ class GroupMembershipTest {
                 () -> createMembership(groupId, memberId, null));
     }
 
+    @DisplayName("Missing group ID throws an exception")
     @Test
     void missingGroupIdThrows() {
         MemberId memberId = MemberId.newId();
@@ -24,6 +27,7 @@ class GroupMembershipTest {
                 () -> createMembership(null, memberId, Role.MEMBER));
     }
 
+    @DisplayName("Missing member ID throws an exception")
     @Test
     void missingMemberIdThrows() {
         GroupId groupId = GroupId.newId();
@@ -32,6 +36,7 @@ class GroupMembershipTest {
                 () -> createMembership(groupId, null, Role.MEMBER));
     }
 
+    @DisplayName("Has role matches assigned role")
     @Test
     void hasRoleMatchesAssignedRole() {
         GroupMembership membership = new GroupMembership(GroupId.newId(), MemberId.newId(), Role.GROUP_LEAD);

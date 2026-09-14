@@ -1,5 +1,6 @@
 package app.prompts.domain.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import app.prompts.domain.model.GroupId;
 import app.prompts.domain.model.GroupMembership;
@@ -14,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DefaultGroupAccessPolicyTest {
     private final GroupAccessPolicy policy = new DefaultGroupAccessPolicy();
 
+    @DisplayName("Member of group is granted access")
     @Test
     void memberOfGroupIsGrantedAccess() {
         GroupId groupId = GroupId.newId();
@@ -23,6 +25,7 @@ class DefaultGroupAccessPolicyTest {
         assertTrue(policy.isMember(groupId, memberId, memberships));
     }
 
+    @DisplayName("Non-member of group is denied access")
     @Test
     void nonMemberOfGroupIsDeniedAccess() {
         GroupId groupId = GroupId.newId();

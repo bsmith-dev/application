@@ -1,6 +1,7 @@
 package app.prompts.infrastructure.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -40,6 +41,7 @@ class JwtAuthFilterTest {
         return req;
     }
 
+    @DisplayName("Valid token populates security context")
     @Test
     void validToken_populatesSecurityContext() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -57,6 +59,7 @@ class JwtAuthFilterTest {
         assertThat(principal.getUsername()).isEqualTo("alice");
     }
 
+    @DisplayName("Valid token with authorities populates granted authorities")
     @Test
     void validTokenWithAuthorities_populatesGrantedAuthorities() throws Exception {
         String token = jwtService.generateToken(UUID.randomUUID(), UUID.randomUUID(), "bob", List.of("ADMIN"));
@@ -69,6 +72,7 @@ class JwtAuthFilterTest {
                 .containsExactly("ADMIN");
     }
 
+    @DisplayName("Missing authorization header does not set security context")
     @Test
     void missingAuthorizationHeader_doesNotSetSecurityContext() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();
@@ -78,6 +82,7 @@ class JwtAuthFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+    @DisplayName("Invalid token does not set security context and continues chain")
     @Test
     void invalidToken_doesNotSetSecurityContextAndContinuesChain() throws Exception {
         MockHttpServletRequest req = requestWithBearer("not.a.valid.token");
@@ -89,6 +94,7 @@ class JwtAuthFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+    @DisplayName("Header without bearer prefix does not set security context")
     @Test
     void headerWithoutBearerPrefix_doesNotSetSecurityContext() throws Exception {
         MockHttpServletRequest req = new MockHttpServletRequest();

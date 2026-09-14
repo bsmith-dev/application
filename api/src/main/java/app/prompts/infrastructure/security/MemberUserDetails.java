@@ -65,9 +65,13 @@ public class MemberUserDetails implements UserDetails, AuthenticatedPrincipal, I
         return authorities;
     }
 
+    @Override
     public boolean isAccountNonExpired() { return true; }
+    @Override
     public boolean isAccountNonLocked() { return true; }
+    @Override
     public boolean isCredentialsNonExpired() { return true; }
+    @Override
     public boolean isEnabled() { return true; }
 
     public static MemberUserDetails fromAuthorities(UUID memberId, UUID organizationId, String username,

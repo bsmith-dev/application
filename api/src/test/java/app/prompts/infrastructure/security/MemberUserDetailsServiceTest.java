@@ -1,6 +1,7 @@
 package app.prompts.infrastructure.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,6 +37,7 @@ class MemberUserDetailsServiceTest {
         service = new MemberUserDetailsService(memberRepository, groupMembershipRepository);
     }
 
+    @DisplayName("Load user by username found returns user details")
     @Test
     void loadUserByUsername_found_returnsUserDetails() {
         UUID memberId = UUID.randomUUID();
@@ -52,6 +54,7 @@ class MemberUserDetailsServiceTest {
         assertThat(((MemberUserDetails) details).getOrganizationIdRaw()).isEqualTo(orgId);
     }
 
+    @DisplayName("Load user by username not found throws username not found exception")
     @Test
     void loadUserByUsername_notFound_throwsUsernameNotFoundException() {
         when(memberRepository.findCredentialsByUsername("unknown")).thenReturn(Optional.empty());

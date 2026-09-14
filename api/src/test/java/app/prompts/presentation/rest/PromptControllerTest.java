@@ -1,6 +1,7 @@
 package app.prompts.presentation.rest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -73,6 +74,7 @@ class PromptControllerTest {
 
     // ── GET /api/groups/{groupId}/prompts ────────────────────────────────────
 
+    @DisplayName("List prompts returns 200 with list")
     @Test
     void listPrompts_returns200WithList() throws Exception {
         when(promptUseCase.listPrompts(GROUP_ID, MEMBER_ID)).thenReturn(List.of(sampleResult()));
@@ -84,6 +86,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$[0].content").value("World content"));
     }
 
+    @DisplayName("List prompts empty list returns 200")
     @Test
     void listPrompts_emptyList_returns200() throws Exception {
         when(promptUseCase.listPrompts(GROUP_ID, MEMBER_ID)).thenReturn(List.of());
@@ -97,6 +100,7 @@ class PromptControllerTest {
 
     // ── POST /api/groups/{groupId}/prompts ───────────────────────────────────
 
+    @DisplayName("Create prompt valid request returns 201")
     @Test
     void createPrompt_validRequest_returns201() throws Exception {
         when(promptUseCase.createPrompt(any())).thenReturn(sampleResult());
@@ -112,6 +116,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.id").value(PROMPT_ID.toString()));
     }
 
+    @DisplayName("Create prompt blank title returns 400")
     @Test
     void createPrompt_blankTitle_returns400() throws Exception {
         mockMvc.perform(post("/api/groups/{groupId}/prompts", GROUP_ID)
@@ -124,6 +129,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.errors.title").exists());
     }
 
+    @DisplayName("Create prompt blank content returns 400")
     @Test
     void createPrompt_blankContent_returns400() throws Exception {
         mockMvc.perform(post("/api/groups/{groupId}/prompts", GROUP_ID)
@@ -136,6 +142,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.errors.content").exists());
     }
 
+    @DisplayName("Create prompt content exceeds max returns 400")
     @Test
     void createPrompt_contentExceedsMax_returns400() throws Exception {
         String huge = "x".repeat(100_001);
@@ -147,6 +154,7 @@ class PromptControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Create prompt missing body returns 400")
     @Test
     void createPrompt_missingBody_returns400() throws Exception {
         mockMvc.perform(post("/api/groups/{groupId}/prompts", GROUP_ID)
@@ -157,6 +165,7 @@ class PromptControllerTest {
 
     // ── GET /api/groups/{groupId}/prompts/{promptId} ─────────────────────────
 
+    @DisplayName("Get prompt found returns 200")
     @Test
     void getPrompt_found_returns200() throws Exception {
         when(promptUseCase.getPrompt(GROUP_ID, PROMPT_ID, MEMBER_ID)).thenReturn(sampleResult());
@@ -168,6 +177,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.title").value("Hello"));
     }
 
+    @DisplayName("Get prompt not found returns 404")
     @Test
     void getPrompt_notFound_returns404() throws Exception {
         when(promptUseCase.getPrompt(any(), any(), any()))
@@ -178,6 +188,7 @@ class PromptControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @DisplayName("Get prompt access denied returns 403")
     @Test
     void getPrompt_accessDenied_returns403() throws Exception {
         when(promptUseCase.getPrompt(any(), any(), any()))
@@ -188,6 +199,7 @@ class PromptControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @DisplayName("Get prompt invalid prompt ID returns 400")
     @Test
     void getPrompt_invalidPromptId_returns400() throws Exception {
         mockMvc.perform(get("/api/groups/{groupId}/prompts/{promptId}", GROUP_ID, "not-a-uuid")
@@ -198,6 +210,7 @@ class PromptControllerTest {
 
     // ── PUT /api/groups/{groupId}/prompts/{promptId} ─────────────────────────
 
+    @DisplayName("Update prompt valid request returns 200")
     @Test
     void updatePrompt_validRequest_returns200() throws Exception {
         when(promptUseCase.updatePrompt(any())).thenReturn(sampleResult());
@@ -212,6 +225,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.title").value("Hello"));
     }
 
+    @DisplayName("Update prompt blank title returns 400")
     @Test
     void updatePrompt_blankTitle_returns400() throws Exception {
         mockMvc.perform(put("/api/groups/{groupId}/prompts/{promptId}", GROUP_ID, PROMPT_ID)
@@ -224,6 +238,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.errors.title").exists());
     }
 
+    @DisplayName("Update prompt not found returns 404")
     @Test
     void updatePrompt_notFound_returns404() throws Exception {
         when(promptUseCase.updatePrompt(any()))
@@ -238,6 +253,7 @@ class PromptControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @DisplayName("Update prompt access denied returns 403")
     @Test
     void updatePrompt_accessDenied_returns403() throws Exception {
         when(promptUseCase.updatePrompt(any()))
@@ -254,6 +270,7 @@ class PromptControllerTest {
 
     // ── DELETE /api/groups/{groupId}/prompts/{promptId} ──────────────────────
 
+    @DisplayName("Delete prompt success returns 204")
     @Test
     void deletePrompt_success_returns204() throws Exception {
         mockMvc.perform(delete("/api/groups/{groupId}/prompts/{promptId}", GROUP_ID, PROMPT_ID)
@@ -263,6 +280,7 @@ class PromptControllerTest {
         verify(promptUseCase).deletePrompt(GROUP_ID, PROMPT_ID, MEMBER_ID);
     }
 
+    @DisplayName("Delete prompt not found returns 404")
     @Test
     void deletePrompt_notFound_returns404() throws Exception {
         doThrow(new PromptNotFoundException("not found"))
@@ -273,6 +291,7 @@ class PromptControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @DisplayName("Delete prompt access denied returns 403")
     @Test
     void deletePrompt_accessDenied_returns403() throws Exception {
         doThrow(new AccessDeniedException("denied"))

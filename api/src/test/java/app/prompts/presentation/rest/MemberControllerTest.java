@@ -1,6 +1,7 @@
 package app.prompts.presentation.rest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -59,6 +60,7 @@ class MemberControllerTest {
 
     // ── POST /api/members ────────────────────────────────────────────────────
 
+    @DisplayName("Register valid request returns 201 with body")
     @Test
     void register_validRequest_returns201WithBody() throws Exception {
         UUID id = UUID.randomUUID();
@@ -78,6 +80,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.role").doesNotExist());
     }
 
+    @DisplayName("Register blank username returns 400 with errors")
     @Test
     void register_blankUsername_returns400WithErrors() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -89,6 +92,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.errors.username").exists());
     }
 
+    @DisplayName("Register too short username returns 400")
     @Test
     void register_tooShortUsername_returns400() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -99,6 +103,7 @@ class MemberControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Register too short password returns 400")
     @Test
     void register_tooShortPassword_returns400() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -109,6 +114,7 @@ class MemberControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Register invalid email returns 400")
     @Test
     void register_invalidEmail_returns400() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -120,6 +126,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.errors.email").exists());
     }
 
+    @DisplayName("Register missing organization ID returns 400")
     @Test
     void register_missingOrganizationId_returns400() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -130,6 +137,7 @@ class MemberControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Register missing body returns 400")
     @Test
     void register_missingBody_returns400() throws Exception {
         mockMvc.perform(post("/api/members")
@@ -139,6 +147,7 @@ class MemberControllerTest {
 
     // ── GET /api/members ─────────────────────────────────────────────────────
 
+    @DisplayName("Get current member authenticated returns profile with role")
     @Test
     void getCurrentMember_authenticated_returnsProfileWithRole() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -155,6 +164,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.role").value("GROUP_LEAD"));
     }
 
+    @DisplayName("List members authenticated returns org scoped list")
     @Test
     void listMembers_authenticated_returnsOrgScopedList() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -175,6 +185,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$[1].role").value("MEMBER"));
     }
 
+    @DisplayName("List members returns empty list when org has no members")
     @Test
     void listMembers_returnsEmptyListWhenOrgHasNoMembers() throws Exception {
         UUID memberId = UUID.randomUUID();

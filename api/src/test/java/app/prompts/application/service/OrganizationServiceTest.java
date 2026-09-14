@@ -1,6 +1,7 @@
 package app.prompts.application.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -54,6 +55,7 @@ class OrganizationServiceTest {
                 groupMembershipRepository);
     }
 
+    @DisplayName("Create organization creates new ID when command has no ID")
     @Test
     void createOrganizationCreatesNewIdWhenCommandHasNoId() {
         when(organizationRepository.save(any(Organization.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -64,6 +66,7 @@ class OrganizationServiceTest {
         assertThat(result.name()).isEqualTo("Acme");
     }
 
+    @DisplayName("List organizations requires admin membership")
     @Test
     void listOrganizationsRequiresAdminMembership() {
         MemberId requesterId = MemberId.newId();
@@ -75,6 +78,7 @@ class OrganizationServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("List organizations returns all organizations for admin")
     @Test
     void listOrganizationsReturnsAllOrganizationsForAdmin() {
         MemberId requesterId = MemberId.newId();
@@ -92,6 +96,7 @@ class OrganizationServiceTest {
         assertThat(results.get(0).name()).isEqualTo("Acme");
     }
 
+    @DisplayName("Rename organization requires admin membership")
     @Test
     void renameOrganizationRequiresAdminMembership() {
         MemberId requesterId = MemberId.newId();
@@ -104,6 +109,7 @@ class OrganizationServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Rename organization updates name for admin")
     @Test
     void renameOrganizationUpdatesNameForAdmin() {
         MemberId requesterId = MemberId.newId();
@@ -121,6 +127,7 @@ class OrganizationServiceTest {
         assertThat(result.name()).isEqualTo("Acme Updated");
     }
 
+    @DisplayName("Rename organization not found throws an exception")
     @Test
     void renameOrganizationNotFoundThrows() {
         MemberId requesterId = MemberId.newId();
@@ -135,6 +142,7 @@ class OrganizationServiceTest {
                 .isInstanceOf(OrganizationNotFoundException.class);
     }
 
+    @DisplayName("Delete organization blocks when members exist")
     @Test
     void deleteOrganizationBlocksWhenMembersExist() {
         MemberId requesterId = MemberId.newId();
@@ -152,6 +160,7 @@ class OrganizationServiceTest {
         verify(organizationRepository, never()).deleteById(any());
     }
 
+    @DisplayName("Delete organization blocks when groups exist")
     @Test
     void deleteOrganizationBlocksWhenGroupsExist() {
         MemberId requesterId = MemberId.newId();
@@ -170,6 +179,7 @@ class OrganizationServiceTest {
         verify(organizationRepository, never()).deleteById(any());
     }
 
+    @DisplayName("Delete organization deletes empty organization for admin")
     @Test
     void deleteOrganizationDeletesEmptyOrganizationForAdmin() {
         MemberId requesterId = MemberId.newId();

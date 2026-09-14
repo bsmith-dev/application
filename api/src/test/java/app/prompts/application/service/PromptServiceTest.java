@@ -1,6 +1,7 @@
 package app.prompts.application.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -53,6 +54,7 @@ class PromptServiceTest {
 
     // ── createPrompt ────────────────────────────────────────────────────────
 
+    @DisplayName("Create prompt by member succeeds")
     @Test
     void createPromptByMemberSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -71,6 +73,7 @@ class PromptServiceTest {
         assertThat(result.createdAt()).isEqualTo(clock.instant());
     }
 
+    @DisplayName("Create prompt by non-member is denied")
     @Test
     void createPromptByNonMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -85,6 +88,7 @@ class PromptServiceTest {
 
     // ── listPrompts ─────────────────────────────────────────────────────────
 
+    @DisplayName("List prompts returns member prompts")
     @Test
     void listPromptsReturnsMemberPrompts() {
         GroupId groupId = GroupId.newId();
@@ -101,6 +105,7 @@ class PromptServiceTest {
         assertThat(results.get(0).title()).isEqualTo("T");
     }
 
+    @DisplayName("List prompts by non-member is denied")
     @Test
     void listPromptsByNonMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -115,6 +120,7 @@ class PromptServiceTest {
 
     // ── getPrompt ────────────────────────────────────────────────────────────
 
+    @DisplayName("Get prompt by member succeeds")
     @Test
     void getPromptByMemberSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -132,6 +138,7 @@ class PromptServiceTest {
         assertThat(result.groupId()).isEqualTo(groupId.value());
     }
 
+    @DisplayName("Get prompt when group ID mismatch throws not found")
     @Test
     void getPromptWhenGroupIdMismatchThrowsNotFound() {
         // The path groupId is different from the prompt's actual groupId — BOLA guard.
@@ -149,6 +156,7 @@ class PromptServiceTest {
                 .isInstanceOf(PromptNotFoundException.class);
     }
 
+    @DisplayName("Get prompt by non-member is denied")
     @Test
     void getPromptByNonMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -162,6 +170,7 @@ class PromptServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Get prompt not found throws an exception")
     @Test
     void getPromptNotFoundThrows() {
         GroupId groupId = GroupId.newId();
@@ -178,6 +187,7 @@ class PromptServiceTest {
 
     // ── updatePrompt ─────────────────────────────────────────────────────────
 
+    @DisplayName("Update prompt by owner succeeds")
     @Test
     void updatePromptByOwnerSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -197,6 +207,7 @@ class PromptServiceTest {
         assertThat(result.content()).isEqualTo("New content");
     }
 
+    @DisplayName("Update prompt by group lead succeeds")
     @Test
     void updatePromptByGroupLeadSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -216,6 +227,7 @@ class PromptServiceTest {
         assertThat(result.title()).isEqualTo("Updated");
     }
 
+    @DisplayName("Update prompt by admin succeeds")
     @Test
     void updatePromptByAdminSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -235,6 +247,7 @@ class PromptServiceTest {
         assertThat(result.title()).isEqualTo("Admin update");
     }
 
+    @DisplayName("Update prompt by other plain member is denied")
     @Test
     void updatePromptByOtherPlainMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -251,6 +264,7 @@ class PromptServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Update prompt not found throws an exception")
     @Test
     void updatePromptNotFoundThrows() {
         GroupId groupId = GroupId.newId();
@@ -265,6 +279,7 @@ class PromptServiceTest {
                 .isInstanceOf(PromptNotFoundException.class);
     }
 
+    @DisplayName("Update prompt group ID mismatch throws not found")
     @Test
     void updatePromptGroupIdMismatchThrowsNotFound() {
         GroupId pathGroupId = GroupId.newId();
@@ -283,6 +298,7 @@ class PromptServiceTest {
 
     // ── deletePrompt ─────────────────────────────────────────────────────────
 
+    @DisplayName("Delete prompt by owner succeeds")
     @Test
     void deletePromptByOwnerSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -299,6 +315,7 @@ class PromptServiceTest {
         verify(promptRepository).deleteById(prompt.id());
     }
 
+    @DisplayName("Delete prompt by group lead succeeds")
     @Test
     void deletePromptByGroupLeadSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -316,6 +333,7 @@ class PromptServiceTest {
         verify(promptRepository).deleteById(prompt.id());
     }
 
+    @DisplayName("Delete prompt by other member is denied")
     @Test
     void deletePromptByOtherMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -332,6 +350,7 @@ class PromptServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Delete prompt missing throws not found")
     @Test
     void deletePromptMissingThrowsNotFound() {
         GroupId groupId = GroupId.newId();
@@ -346,6 +365,7 @@ class PromptServiceTest {
                 .isInstanceOf(PromptNotFoundException.class);
     }
 
+    @DisplayName("Delete prompt group ID mismatch throws not found")
     @Test
     void deletePromptGroupIdMismatchThrowsNotFound() {
         GroupId pathGroupId = GroupId.newId();
@@ -362,6 +382,7 @@ class PromptServiceTest {
                 .isInstanceOf(PromptNotFoundException.class);
     }
 
+    @DisplayName("Delete prompt by non-member is denied")
     @Test
     void deletePromptByNonMemberIsDenied() {
         GroupId groupId = GroupId.newId();

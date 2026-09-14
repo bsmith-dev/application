@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class GroupService implements ManageGroupUseCase {
+
+    public static final String MEMBER_IS_NOT_IN_THE_GROUP = "Member is not in the group";
     private final GroupRepository groupRepository;
     private final MemberRepository memberRepository;
     private final GroupMembershipRepository groupMembershipRepository;
@@ -92,7 +94,7 @@ public class GroupService implements ManageGroupUseCase {
         Group group = findGroupInOrg(gid, organizationId);
         List<GroupMembership> memberships = groupMembershipRepository.findByGroupId(gid);
         if (!groupAccessPolicy.isMember(gid, rid, memberships)) {
-            throw new AccessDeniedException("Member is not in the group");
+            throw new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP);
         }
         return toGroupResult(group);
     }
@@ -104,7 +106,7 @@ public class GroupService implements ManageGroupUseCase {
         MemberId rid = new MemberId(requesterId);
         Group group = findGroupInOrg(gid, organizationId);
         GroupMembership requester = groupMembershipRepository.findByGroupIdAndMemberId(gid, rid)
-                .orElseThrow(() -> new AccessDeniedException("Member is not in the group"));
+                .orElseThrow(() -> new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP));
         if (!groupMembershipManagementPolicy.canManageMembers(requester.role())) {
             throw new AccessDeniedException("Only ADMIN or GROUP_LEAD can rename a group");
         }
@@ -119,7 +121,7 @@ public class GroupService implements ManageGroupUseCase {
         MemberId rid = new MemberId(requesterId);
         findGroupInOrg(gid, organizationId);
         GroupMembership requester = groupMembershipRepository.findByGroupIdAndMemberId(gid, rid)
-                .orElseThrow(() -> new AccessDeniedException("Member is not in the group"));
+                .orElseThrow(() -> new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP));
         if (requester.role() != Role.ADMIN) {
             throw new AccessDeniedException("Only ADMIN can delete a group");
         }
@@ -141,7 +143,7 @@ public class GroupService implements ManageGroupUseCase {
 
         GroupMembership requesterMembership = groupMembershipRepository
                 .findByGroupIdAndMemberId(groupId, requesterId)
-                .orElseThrow(() -> new AccessDeniedException("Member is not in the group"));
+                .orElseThrow(() -> new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP));
         if (!groupMembershipManagementPolicy.canManageMembers(requesterMembership.role())) {
             throw new AccessDeniedException("Member cannot manage group members");
         }
@@ -160,7 +162,7 @@ public class GroupService implements ManageGroupUseCase {
 
         findGroupInOrg(gid, organizationId);
         GroupMembership requester = groupMembershipRepository.findByGroupIdAndMemberId(gid, rid)
-                .orElseThrow(() -> new AccessDeniedException("Member is not in the group"));
+                .orElseThrow(() -> new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP));
         if (!groupMembershipManagementPolicy.canManageMembers(requester.role())) {
             throw new AccessDeniedException("Only ADMIN or GROUP_LEAD can remove members");
         }
@@ -177,7 +179,7 @@ public class GroupService implements ManageGroupUseCase {
 
         findGroupInOrg(gid, organizationId);
         GroupMembership requester = groupMembershipRepository.findByGroupIdAndMemberId(gid, rid)
-                .orElseThrow(() -> new AccessDeniedException("Member is not in the group"));
+                .orElseThrow(() -> new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP));
         if (!groupMembershipManagementPolicy.canManageMembers(requester.role())) {
             throw new AccessDeniedException("Only ADMIN or GROUP_LEAD can change roles");
         }
@@ -195,7 +197,7 @@ public class GroupService implements ManageGroupUseCase {
         findGroupInOrg(groupId, organizationId);
         List<GroupMembership> memberships = groupMembershipRepository.findByGroupId(groupId);
         if (!groupAccessPolicy.isMember(groupId, requesterId, memberships)) {
-            throw new AccessDeniedException("Member is not in the group");
+            throw new AccessDeniedException(MEMBER_IS_NOT_IN_THE_GROUP);
         }
         return memberships.stream().map(this::toMembershipResult).toList();
     }

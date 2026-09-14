@@ -4,6 +4,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.crypto.SecretKey;
@@ -30,6 +31,7 @@ class JwtServiceTest {
         jwtService = new JwtService(props);
     }
 
+    @DisplayName("Generated token preserves member ID, organization ID, and username")
     @Test
     void generateToken_roundTrip_memberIdAndUsernameRoundTrip() {
         UUID memberId = UUID.randomUUID();
@@ -44,6 +46,7 @@ class JwtServiceTest {
         assertThat(jwtService.parseToken(token).get("username", String.class)).isEqualTo(username);
     }
 
+    @DisplayName("Generate token authorities claim round trip")
     @Test
     void generateToken_authoritiesClaimRoundTrip() {
         UUID memberId = UUID.randomUUID();
@@ -54,6 +57,7 @@ class JwtServiceTest {
         assertThat(jwtService.extractAuthorities(token)).containsExactlyInAnyOrder("ADMIN", "GROUP_LEAD");
     }
 
+    @DisplayName("Generated token without authorities extracts an empty authority list")
     @Test
     void generateToken_emptyAuthorities_extractReturnsEmpty() {
         String token = jwtService.generateToken(UUID.randomUUID(), UUID.randomUUID(), "carol", List.of());
@@ -61,6 +65,7 @@ class JwtServiceTest {
         assertThat(jwtService.extractAuthorities(token)).isEmpty();
     }
 
+    @DisplayName("Generate token sets issuer and audience")
     @Test
     void generateToken_setsIssuerAndAudience() {
         String token = jwtService.generateToken(UUID.randomUUID(), UUID.randomUUID(), "dave", List.of());
@@ -71,6 +76,7 @@ class JwtServiceTest {
         assertThat(claims.getAudience()).contains("prompt-db-api");
     }
 
+    @DisplayName("Parsing an expired token throws a JWT exception")
     @Test
     void parseToken_expiredToken_throwsJwtException() {
         // Build an already-expired token directly using jjwt, signed with the same key
@@ -88,6 +94,7 @@ class JwtServiceTest {
                 .isInstanceOf(JwtException.class);
     }
 
+    @DisplayName("Parsing a token with the wrong issuer throws a JWT exception")
     @Test
     void parseToken_wrongIssuer_throwsJwtException() {
         SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
@@ -104,6 +111,7 @@ class JwtServiceTest {
                 .isInstanceOf(JwtException.class);
     }
 
+    @DisplayName("Parsing a token with the wrong audience throws a JWT exception")
     @Test
     void parseToken_wrongAudience_throwsJwtException() {
         SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
@@ -120,6 +128,7 @@ class JwtServiceTest {
                 .isInstanceOf(JwtException.class);
     }
 
+    @DisplayName("Parsing a token with a tampered signature throws a JWT exception")
     @Test
     void parseToken_tamperedSignature_throwsJwtException() {
         String token = jwtService.generateToken(UUID.randomUUID(), UUID.randomUUID(), "eve", List.of());
@@ -130,6 +139,7 @@ class JwtServiceTest {
                 .isInstanceOf(JwtException.class);
     }
 
+    @DisplayName("Extract member ID returns correct UUID")
     @Test
     void extractMemberId_returnsCorrectUuid() {
         UUID memberId = UUID.randomUUID();
@@ -138,6 +148,7 @@ class JwtServiceTest {
         assertThat(jwtService.extractMemberId(token)).isEqualTo(memberId);
     }
 
+    @DisplayName("Extract organization ID returns correct UUID")
     @Test
     void extractOrganizationId_returnsCorrectUuid() {
         UUID orgId = UUID.randomUUID();
@@ -146,6 +157,7 @@ class JwtServiceTest {
         assertThat(jwtService.extractOrganizationId(token)).isEqualTo(orgId);
     }
 
+    @DisplayName("Extracting authorities from a token without the claim returns empty")
     @Test
     void extractAuthorities_missingClaim_returnsEmpty() {
         // Token built without an authorities claim

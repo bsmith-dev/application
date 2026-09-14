@@ -1,6 +1,7 @@
 package app.prompts.infrastructure.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -35,6 +36,7 @@ class GroupAccessServiceTest {
         return new MemberUserDetails(memberId, UUID.randomUUID(), "user", "");
     }
 
+    @DisplayName("Is member when membership exists returns true")
     @Test
     void isMember_whenMembershipExists_returnsTrue() {
         UUID groupId = UUID.randomUUID();
@@ -48,6 +50,7 @@ class GroupAccessServiceTest {
         assertThat(groupAccessService.isMember(groupId, principalFor(memberId))).isTrue();
     }
 
+    @DisplayName("Is member when no membership returns false")
     @Test
     void isMember_whenNoMembership_returnsFalse() {
         UUID groupId = UUID.randomUUID();
@@ -59,6 +62,7 @@ class GroupAccessServiceTest {
         assertThat(groupAccessService.isMember(groupId, principalFor(memberId))).isFalse();
     }
 
+    @DisplayName("Is member when principal is not authenticated member returns false")
     @Test
     void isMember_whenPrincipalIsNotAuthenticatedMember_returnsFalse() {
         UUID groupId = UUID.randomUUID();
@@ -67,6 +71,7 @@ class GroupAccessServiceTest {
         assertThat(groupAccessService.isMember(groupId, notAMember)).isFalse();
     }
 
+    @DisplayName("Is member when principal is null returns false")
     @Test
     void isMember_whenPrincipalIsNull_returnsFalse() {
         assertThat(groupAccessService.isMember(UUID.randomUUID(), null)).isFalse();

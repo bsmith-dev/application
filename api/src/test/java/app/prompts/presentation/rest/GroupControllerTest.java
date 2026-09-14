@@ -1,6 +1,7 @@
 package app.prompts.presentation.rest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -63,6 +64,7 @@ class GroupControllerTest {
 
     // ── GET /api/groups ──────────────────────────────────────────────────────
 
+    @DisplayName("List my groups authenticated returns 200")
     @Test
     void listMyGroups_authenticated_returns200() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -76,6 +78,7 @@ class GroupControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Support"));
     }
 
+    @DisplayName("List my groups returns empty list when no groups")
     @Test
     void listMyGroups_returnsEmptyListWhenNoGroups() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -91,6 +94,7 @@ class GroupControllerTest {
 
     // ── POST /api/groups ─────────────────────────────────────────────────────
 
+    @DisplayName("Create group with valid payload returns 201")
     @Test
     void createGroup_withValidPayload_returns201() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -108,6 +112,7 @@ class GroupControllerTest {
                 .andExpect(jsonPath("$.name").value("Ops"));
     }
 
+    @DisplayName("Create group blank name returns 400")
     @Test
     void createGroup_blankName_returns400() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -122,6 +127,7 @@ class GroupControllerTest {
                 .andExpect(jsonPath("$.errors.name").exists());
     }
 
+    @DisplayName("Create group name too long returns 400")
     @Test
     void createGroup_nameTooLong_returns400() throws Exception {
         UUID memberId = UUID.randomUUID();
@@ -137,6 +143,7 @@ class GroupControllerTest {
 
     // ── GET /api/groups/{id}/members ─────────────────────────────────────────
 
+    @DisplayName("List members authenticated returns 200")
     @Test
     void listMembers_authenticated_returns200() throws Exception {
         UUID groupId = UUID.randomUUID();
@@ -151,6 +158,7 @@ class GroupControllerTest {
                 .andExpect(jsonPath("$[0].role").value("MEMBER"));
     }
 
+    @DisplayName("List members service throws access denied returns 403")
     @Test
     void listMembers_serviceThrowsAccessDenied_returns403() throws Exception {
         UUID groupId = UUID.randomUUID();
@@ -164,6 +172,7 @@ class GroupControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @DisplayName("List members service throws group not found returns 404")
     @Test
     void listMembers_serviceThrowsGroupNotFound_returns404() throws Exception {
         UUID groupId = UUID.randomUUID();
@@ -179,6 +188,7 @@ class GroupControllerTest {
 
     // ── POST /api/groups/{id}/members ────────────────────────────────────────
 
+    @DisplayName("Add member null member ID returns 400")
     @Test
     void addMember_nullMemberId_returns400() throws Exception {
         UUID groupId = UUID.randomUUID();
@@ -194,6 +204,7 @@ class GroupControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Add member invalid group ID returns 400")
     @Test
     void addMember_invalidGroupId_returns400() throws Exception {
         UUID requesterId = UUID.randomUUID();

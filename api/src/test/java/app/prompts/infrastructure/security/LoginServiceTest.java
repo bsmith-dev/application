@@ -1,6 +1,7 @@
 package app.prompts.infrastructure.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,6 +37,7 @@ class LoginServiceTest {
         loginService = new LoginService(authenticationManager, tokenService);
     }
 
+    @DisplayName("Login valid credentials returns token")
     @Test
     void login_validCredentials_returnsToken() {
         UUID memberId = UUID.randomUUID();
@@ -51,6 +53,7 @@ class LoginServiceTest {
         assertThat(response.token()).isEqualTo("jwt-token-abc");
     }
 
+    @DisplayName("Login bad credentials throws an exception")
     @Test
     void login_badCredentials_throws() {
         when(authenticationManager.authenticate(any()))
@@ -60,6 +63,7 @@ class LoginServiceTest {
                 .isInstanceOf(BadCredentialsException.class);
     }
 
+    @DisplayName("Login authorities are forwarded to token service")
     @Test
     void login_authoritiesAreForwardedToTokenService() {
         UUID memberId = UUID.randomUUID();

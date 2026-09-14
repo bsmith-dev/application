@@ -1,6 +1,7 @@
 package app.prompts.presentation.rest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -56,6 +57,7 @@ class OrganizationControllerTest {
         return "Bearer " + jwtService.generateToken(memberId, orgId, "alice", authorities);
     }
 
+    @DisplayName("Create organization valid request returns 201")
     @Test
     void createOrganization_validRequest_returns201() throws Exception {
         UUID orgId = UUID.randomUUID();
@@ -72,6 +74,7 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$.name").value("Acme"));
     }
 
+    @DisplayName("Create organization blank name returns 400")
     @Test
     void createOrganization_blankName_returns400() throws Exception {
         mockMvc.perform(post("/api/organizations")
@@ -83,6 +86,7 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$.errors.name").exists());
     }
 
+    @DisplayName("List organizations authenticated admin returns 200")
     @Test
     void listOrganizations_authenticatedAdmin_returns200() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -97,6 +101,7 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Acme"));
     }
 
+    @DisplayName("List organizations service throws access denied returns 403")
     @Test
     void listOrganizations_serviceThrowsAccessDenied_returns403() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -109,6 +114,7 @@ class OrganizationControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    @DisplayName("Rename organization valid request returns 200")
     @Test
     void renameOrganization_validRequest_returns200() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -126,6 +132,7 @@ class OrganizationControllerTest {
                 .andExpect(jsonPath("$.name").value("Acme Updated"));
     }
 
+    @DisplayName("Rename organization blank name returns 400")
     @Test
     void renameOrganization_blankName_returns400() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -140,6 +147,7 @@ class OrganizationControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("Rename organization service throws not found returns 404")
     @Test
     void renameOrganization_serviceThrowsNotFound_returns404() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -156,6 +164,7 @@ class OrganizationControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @DisplayName("Delete organization empty org returns 204")
     @Test
     void deleteOrganization_emptyOrg_returns204() throws Exception {
         UUID requesterId = UUID.randomUUID();
@@ -166,6 +175,7 @@ class OrganizationControllerTest {
                 .andExpect(status().isNoContent());
     }
 
+    @DisplayName("Delete organization non empty org returns 409")
     @Test
     void deleteOrganization_nonEmptyOrg_returns409() throws Exception {
         UUID requesterId = UUID.randomUUID();

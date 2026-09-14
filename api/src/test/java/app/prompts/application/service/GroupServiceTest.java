@@ -1,6 +1,7 @@
 package app.prompts.application.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -59,6 +60,7 @@ class GroupServiceTest {
 
     // ── createGroup ──────────────────────────────────────────────────────────
 
+    @DisplayName("Create group with organization ID preserves it")
     @Test
     void createGroupWithOrganizationIdPreservesIt() {
         UUID orgId = UUID.randomUUID();
@@ -70,6 +72,7 @@ class GroupServiceTest {
         assertThat(result.organizationId()).isEqualTo(orgId);
     }
 
+    @DisplayName("Create group auto assigns requester as admin")
     @Test
     void createGroupAutoAssignsRequesterAsAdmin() {
         UUID orgId = UUID.randomUUID();
@@ -85,6 +88,7 @@ class GroupServiceTest {
 
     // ── addMember ────────────────────────────────────────────────────────────
 
+    @DisplayName("Add member by group lead succeeds")
     @Test
     void addMemberByGroupLeadSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -108,6 +112,7 @@ class GroupServiceTest {
         assertThat(result.role()).isEqualTo(Role.MEMBER);
     }
 
+    @DisplayName("Add member by admin succeeds")
     @Test
     void addMemberByAdminSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -130,6 +135,7 @@ class GroupServiceTest {
         assertThat(result.role()).isEqualTo(Role.GROUP_LEAD);
     }
 
+    @DisplayName("Add member by non-member requester is denied")
     @Test
     void addMemberByNonMemberRequesterIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -149,6 +155,7 @@ class GroupServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Add member by plain member is denied")
     @Test
     void addMemberByPlainMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -168,6 +175,7 @@ class GroupServiceTest {
                 .isInstanceOf(AccessDeniedException.class);
     }
 
+    @DisplayName("Add member group not found throws an exception")
     @Test
     void addMemberGroupNotFoundThrows() {
         GroupId groupId = GroupId.newId();
@@ -182,6 +190,7 @@ class GroupServiceTest {
                 .isInstanceOf(GroupNotFoundException.class);
     }
 
+    @DisplayName("Add member target member not found throws an exception")
     @Test
     void addMemberTargetMemberNotFoundThrows() {
         GroupId groupId = GroupId.newId();
@@ -200,6 +209,7 @@ class GroupServiceTest {
 
     // ── listMembers ──────────────────────────────────────────────────────────
 
+    @DisplayName("List members by member succeeds")
     @Test
     void listMembersByMemberSucceeds() {
         GroupId groupId = GroupId.newId();
@@ -217,6 +227,7 @@ class GroupServiceTest {
         assertThat(results.get(0).memberId()).isEqualTo(requesterId.value());
     }
 
+    @DisplayName("List members by non-member is denied")
     @Test
     void listMembersByNonMemberIsDenied() {
         GroupId groupId = GroupId.newId();
@@ -234,6 +245,7 @@ class GroupServiceTest {
 
     // ── Cross-org IDOR isolation ──────────────────────────────────────────────
 
+    @DisplayName("Get group in wrong org throws not found")
     @Test
     void getGroupInWrongOrgThrowsNotFound() {
         GroupId groupId = GroupId.newId();
@@ -250,6 +262,7 @@ class GroupServiceTest {
 
     // ── listGroupsForMember ──────────────────────────────────────────────────
 
+    @DisplayName("List groups for member returns only groups in same org")
     @Test
     void listGroupsForMemberReturnsOnlyGroupsInSameOrg() {
         MemberId memberId = MemberId.newId();
@@ -268,6 +281,7 @@ class GroupServiceTest {
         assertThat(results.get(0).organizationId()).isEqualTo(orgId.value());
     }
 
+    @DisplayName("List groups for member skips groups in different org")
     @Test
     void listGroupsForMemberSkipsGroupsInDifferentOrg() {
         MemberId memberId = MemberId.newId();
