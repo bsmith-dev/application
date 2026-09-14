@@ -20,7 +20,7 @@
             <div class="field">
                 <label for="role">Role</label>
                 <select id="role" th:field="*{role}" th:errorclass="input-error">
-                    <option th:each="r : ${T(com.example.promptdb.api.dto.Role).values()}" th:value="${r}" th:text="${r}">ROLE</option>
+                    <option th:each="r : ${T(app.prompts.ui.api.dto.Role).values()}" th:value="${r}" th:text="${r}">ROLE</option>
                 </select>
                 <p class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">Invalid</p>
             </div>

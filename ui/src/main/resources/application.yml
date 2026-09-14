@@ -31,4 +31,4 @@ app:
 
 logging:
   level:
-    com.example.promptdb: INFO
+    app.prompts.ui: INFO

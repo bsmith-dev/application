@@ -1,0 +1,100 @@
+package app.prompts.api.infrastructure.config;
+
+import app.prompts.api.application.port.GroupMembershipRepository;
+import app.prompts.api.application.port.MemberRepository;
+import app.prompts.api.application.port.TokenService;
+import app.prompts.api.infrastructure.security.GroupAccessService;
+import app.prompts.api.infrastructure.security.JwtAuthFilter;
+import app.prompts.api.infrastructure.security.JwtProperties;
+import app.prompts.api.infrastructure.security.JwtService;
+import app.prompts.api.infrastructure.security.LoginService;
+import app.prompts.api.infrastructure.security.MemberUserDetailsService;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@EnableConfigurationProperties(JwtProperties.class)
+public class SecurityConfig {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(MemberRepository memberRepository,
+                                                 GroupMembershipRepository groupMembershipRepository) {
+        return new MemberUserDetailsService(memberRepository, groupMembershipRepository);
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider(UserDetailsService userDetailsService,
+                                                            PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public JwtService jwtService(JwtProperties jwtProperties) {
+        return new JwtService(jwtProperties);
+    }
+
+    @Bean
+    public LoginService loginService(AuthenticationManager authenticationManager, TokenService tokenService) {
+        return new LoginService(authenticationManager, tokenService);
+    }
+
+    @Bean
+    public JwtAuthFilter jwtAuthFilter(JwtService jwtService) {
+        return new JwtAuthFilter(jwtService);
+    }
+
+    @Bean
+    public GroupAccessService groupAccessService(app.prompts.api.application.port.GroupMembershipRepository groupMembershipRepository) {
+        return new GroupAccessService(groupMembershipRepository);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/index.html", "/app.html", "/style.css", "/app.js").permitAll()
+                .requestMatchers("/error").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/members").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/organizations").permitAll()
+                .anyRequest().authenticated())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(e -> e.authenticationEntryPoint(
+                    (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable);
+        return http.build();
+    }
+}

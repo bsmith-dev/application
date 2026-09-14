@@ -130,53 +130,53 @@
                             </rules>
                             <excludes>
                                 <!-- application entry point -->
-                                <exclude>org/sandbox/PromptDatabaseApplication.class</exclude>
+                                <exclude>app/prompts/api/PromptDatabaseAPI.class</exclude>
                                 <!-- JPA entities (framework boilerplate) -->
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/persistence/Jpa*Entity.class
+                                    app/prompts/api/infrastructure/persistence/Jpa*Entity.class
                                 </exclude>
                                 <!-- Spring Data repository interfaces -->
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/persistence/Jpa*Repository.class
+                                    app/prompts/api/infrastructure/persistence/Jpa*Repository.class
                                 </exclude>
                                 <!-- Configuration-only classes -->
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/config/PromptsInfrastructureConfig.class
+                                    app/prompts/api/infrastructure/config/PromptsInfrastructureConfig.class
                                 </exclude>
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/config/SecurityConfig.class
+                                    app/prompts/api/infrastructure/config/SecurityConfig.class
                                 </exclude>
                                 <!-- Port interfaces and markers -->
-                                <exclude>org/sandbox/prompts/application/port/*.class</exclude>
+                                <exclude>app/prompts/api/application/port/*.class</exclude>
                                 <!-- Exception value objects -->
                                 <exclude>
-                                    org/sandbox/prompts/application/service/*NotFoundException.class
+                                    app/prompts/api/application/service/*NotFoundException.class
                                 </exclude>
                                 <exclude>
-                                    org/sandbox/prompts/application/service/AccessDeniedException.class
+                                    app/prompts/api/application/service/AccessDeniedException.class
                                 </exclude>
                                 <!-- DTOs -->
-                                <exclude>org/sandbox/prompts/application/dto/*.class</exclude>
+                                <exclude>app/prompts/api/application/dto/*.class</exclude>
                                 <!-- Mapper (package-private, excluded per agreement) -->
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/persistence/PromptsPersistenceMapper.class
+                                    app/prompts/api/infrastructure/persistence/PromptsPersistenceMapper.class
                                 </exclude>
                                 <!-- Domain policy interfaces -->
                                 <exclude>
-                                    org/sandbox/prompts/domain/service/GroupAccessPolicy.class
+                                    app/prompts/api/domain/service/GroupAccessPolicy.class
                                 </exclude>
                                 <exclude>
-                                    org/sandbox/prompts/domain/service/GroupMembershipManagementPolicy.class
+                                    app/prompts/api/domain/service/GroupMembershipManagementPolicy.class
                                 </exclude>
                                 <exclude>
-                                    org/sandbox/prompts/domain/service/PromptAuthorizationPolicy.class
+                                    app/prompts/api/domain/service/PromptAuthorizationPolicy.class
                                 </exclude>
                                 <!-- Persistence adapters require a live DB; excluded from unit api-coverage -->
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/persistence/*PersistenceAdapter.class
+                                    app/prompts/api/infrastructure/persistence/*PersistenceAdapter.class
                                 </exclude>
                                 <exclude>
-                                    org/sandbox/prompts/infrastructure/persistence/PromptPersistenceAdapter.class
+                                    app/prompts/api/infrastructure/persistence/PromptPersistenceAdapter.class
                                 </exclude>
                             </excludes>
                         </configuration>

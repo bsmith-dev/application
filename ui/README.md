@@ -26,7 +26,7 @@ mvn -version
 ## Project layout
 
 ```
-src/main/java/com/example/promptdb/
+src/main/java/app/prompts/ui/
 ├── api/          REST clients + DTOs for every prompt_db endpoint
 ├── config/       API base URL / timeout configuration, RestClient bean
 ├── security/     Session-backed "current user" state, login/JWT plumbing, auth interceptor
@@ -129,7 +129,7 @@ The UI hides buttons/links a user isn't expected to have access to, but this is 
 convenience layer only — the `prompt_db` API is the authoritative point of enforcement,
 and every mutating action here is dispatched as a real HTTP call the API can still reject
 based on its own rules. If the real API's authorization rules differ from the assumptions
-above, update `com.example.promptdb.support.GroupPermissions` and the `@PreAuthorize`-style
+above, update `app.prompts.ui.support.GroupPermissions` and the `@PreAuthorize`-style
 checks in the `web` controllers accordingly.
 
 ## Error handling
